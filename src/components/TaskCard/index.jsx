@@ -3,7 +3,6 @@ import { Draggable } from "@hello-pangea/dnd";
 import {
     Card,
     CardContent,
-    CardActions,
     Typography,
     IconButton,
     Chip,
@@ -28,51 +27,11 @@ import {
 import { formatDate, getRelativeTime, truncateText } from "../../utils";
 import { useTasks } from "../../hooks";
 
-/**
- * TaskCard Component - Interactive draggable task card with actions
- * Supports drag and drop, edit, delete, and view operations
- *
- * @param {Object} task - Task object
- * @param {number} index - Index of task in column
- */
 const TaskCard = ({ task, index }) => {
     const { editTask, removeTask } = useTasks();
     const [anchorEl, setAnchorEl] = useState(null);
-    const [openDialog, setOpenDialog] = useState(null); // 'edit', 'delete', 'view'
+    const [openDialog, setOpenDialog] = useState(null);
     const [editedTask, setEditedTask] = useState(task);
-
-    const handleMenuOpen = (event) => {
-        event.stopPropagation();
-        setAnchorEl(event.currentTarget);
-    };
-
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-    };
-
-    const handleDialogOpen = (dialogType) => {
-        setOpenDialog(dialogType);
-        handleMenuClose();
-    };
-
-    const handleDialogClose = () => {
-        setOpenDialog(null);
-        setEditedTask(task);
-    };
-
-    const handleEdit = () => {
-        editTask.mutate(editedTask);
-        handleDialogClose();
-    };
-
-    const handleDelete = () => {
-        removeTask.mutate(task.id);
-        handleDialogClose();
-    };
-
-    const handleInputChange = (field, value) => {
-        setEditedTask((prev) => ({ ...prev, [field]: value }));
-    };
 
     return (
         <>
@@ -95,7 +54,6 @@ const TaskCard = ({ task, index }) => {
                             border: snapshot.isDragging ? "2px solid" : "1px solid",
                             borderColor: snapshot.isDragging ? "primary.main" : "divider",
                             userSelect: "none",
-                            WebkitUserSelect: "none",
                             "&:hover": {
                                 boxShadow: snapshot.isDragging ? 8 : 4,
                                 transform: snapshot.isDragging
@@ -105,7 +63,6 @@ const TaskCard = ({ task, index }) => {
                         }}
                     >
                         <CardContent sx={{ p: 2, pb: 1 }}>
-                            {/* Title */}
                             <Box
                                 sx={{
                                     display: "flex",
@@ -121,24 +78,23 @@ const TaskCard = ({ task, index }) => {
                                     />
                                     <Typography
                                         variant="h6"
-                                        sx={{
-                                            fontSize: "1rem",
-                                            fontWeight: 600,
-                                        }}
+                                        sx={{ fontSize: "1rem", fontWeight: 600 }}
                                     >
                                         {task.title}
                                     </Typography>
                                 </Box>
                                 <IconButton
                                     size="small"
-                                    onClick={handleMenuOpen}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setAnchorEl(e.currentTarget);
+                                    }}
                                     sx={{ flexShrink: 0 }}
                                 >
                                     <MoreVertIcon fontSize="small" />
                                 </IconButton>
                             </Box>
 
-                            {/* Description */}
                             {task.description && (
                                 <Typography
                                     variant="body2"
@@ -165,7 +121,6 @@ const TaskCard = ({ task, index }) => {
                                         sx={{ height: 20, fontSize: "0.7rem" }}
                                     />
                                 )}
-
                                 {task.createdAt && (
                                     <Tooltip title={formatDate(task.createdAt)}>
                                         <Chip
@@ -182,32 +137,37 @@ const TaskCard = ({ task, index }) => {
                 )}
             </Draggable>
 
-            {/* Actions Menu */}
-            <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-                anchorOrigin={{ vertical: "top", horizontal: "right" }}
-                transformOrigin={{ vertical: "top", horizontal: "right" }}
-            >
-                <MenuItem onClick={() => handleDialogOpen("view")}>
-                    <ViewIcon fontSize="small" sx={{ mr: 1 }} />
-                    View Details
+            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+                <MenuItem
+                    onClick={() => {
+                        setOpenDialog("view");
+                        setAnchorEl(null);
+                    }}
+                >
+                    <ViewIcon fontSize="small" sx={{ mr: 1 }} /> View Details
                 </MenuItem>
-                <MenuItem onClick={() => handleDialogOpen("edit")}>
-                    <EditIcon fontSize="small" sx={{ mr: 1 }} />
-                    Edit
+                <MenuItem
+                    onClick={() => {
+                        setOpenDialog("edit");
+                        setAnchorEl(null);
+                    }}
+                >
+                    <EditIcon fontSize="small" sx={{ mr: 1 }} /> Edit
                 </MenuItem>
-                <MenuItem onClick={() => handleDialogOpen("delete")} sx={{ color: "error.main" }}>
-                    <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
-                    Delete
+                <MenuItem
+                    onClick={() => {
+                        setOpenDialog("delete");
+                        setAnchorEl(null);
+                    }}
+                    sx={{ color: "error.main" }}
+                >
+                    <DeleteIcon fontSize="small" sx={{ mr: 1 }} /> Delete
                 </MenuItem>
             </Menu>
 
-            {/* View Dialog */}
             <Dialog
                 open={openDialog === "view"}
-                onClose={handleDialogClose}
+                onClose={() => setOpenDialog(null)}
                 maxWidth="sm"
                 fullWidth
             >
@@ -239,14 +199,16 @@ const TaskCard = ({ task, index }) => {
                     </Box>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleDialogClose}>Close</Button>
+                    <Button onClick={() => setOpenDialog(null)}>Close</Button>
                 </DialogActions>
             </Dialog>
 
-            {/* Edit Dialog */}
             <Dialog
                 open={openDialog === "edit"}
-                onClose={handleDialogClose}
+                onClose={() => {
+                    setOpenDialog(null);
+                    setEditedTask(task);
+                }}
                 maxWidth="sm"
                 fullWidth
             >
@@ -256,7 +218,7 @@ const TaskCard = ({ task, index }) => {
                         fullWidth
                         label="Title"
                         value={editedTask.title}
-                        onChange={(e) => handleInputChange("title", e.target.value)}
+                        onChange={(e) => setEditedTask({ ...editedTask, title: e.target.value })}
                         margin="normal"
                         required
                     />
@@ -264,32 +226,51 @@ const TaskCard = ({ task, index }) => {
                         fullWidth
                         label="Description"
                         value={editedTask.description || ""}
-                        onChange={(e) => handleInputChange("description", e.target.value)}
+                        onChange={(e) =>
+                            setEditedTask({ ...editedTask, description: e.target.value })
+                        }
                         margin="normal"
                         multiline
                         rows={4}
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleDialogClose}>Cancel</Button>
-                    <Button onClick={handleEdit} variant="contained" disabled={!editedTask.title}>
-                        Save Changes
+                    <Button
+                        onClick={() => {
+                            setOpenDialog(null);
+                            setEditedTask(task);
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            editTask.mutate(editedTask);
+                            setOpenDialog(null);
+                        }}
+                        variant="contained"
+                        disabled={!editedTask.title}
+                    >
+                        Save
                     </Button>
                 </DialogActions>
             </Dialog>
 
-            {/* Delete Confirmation Dialog */}
-            <Dialog open={openDialog === "delete"} onClose={handleDialogClose}>
+            <Dialog open={openDialog === "delete"} onClose={() => setOpenDialog(null)}>
                 <DialogTitle>Confirm Delete</DialogTitle>
                 <DialogContent>
-                    <Typography>
-                        Are you sure you want to delete the task "{task.title}"? This action cannot
-                        be undone.
-                    </Typography>
+                    <Typography>Are you sure you want to delete "{task.title}"?</Typography>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleDialogClose}>Cancel</Button>
-                    <Button onClick={handleDelete} color="error" variant="contained">
+                    <Button onClick={() => setOpenDialog(null)}>Cancel</Button>
+                    <Button
+                        onClick={() => {
+                            removeTask.mutate(task.id);
+                            setOpenDialog(null);
+                        }}
+                        color="error"
+                        variant="contained"
+                    >
                         Delete
                     </Button>
                 </DialogActions>

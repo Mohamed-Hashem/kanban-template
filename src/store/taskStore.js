@@ -14,23 +14,19 @@ const useTaskStore = create(
                 set((state) => {
                     state.tasks = tasks;
                 }),
-
             addTask: (task) =>
                 set((state) => {
                     state.tasks.push(task);
                 }),
-
             updateTask: (id, updates) =>
                 set((state) => {
                     const index = state.tasks.findIndex((t) => t.id === id);
                     if (index !== -1) state.tasks[index] = { ...state.tasks[index], ...updates };
                 }),
-
             removeTask: (id) =>
                 set((state) => {
                     state.tasks = state.tasks.filter((t) => t.id !== id);
                 }),
-
             moveTask: (id, newColumn) =>
                 set((state) => {
                     const index = state.tasks.findIndex((t) => String(t.id) === String(id));
@@ -39,7 +35,6 @@ const useTaskStore = create(
                         state.tasks[index].updatedAt = new Date().toISOString();
                     }
                 }),
-
             selectTask: (task) =>
                 set((state) => {
                     state.selectedTask = task;
@@ -48,7 +43,6 @@ const useTaskStore = create(
                 set((state) => {
                     state.selectedTask = null;
                 }),
-
             setSearchQuery: (query) =>
                 set((state) => {
                     state.searchQuery = query;
@@ -57,7 +51,6 @@ const useTaskStore = create(
                 set((state) => {
                     state.searchQuery = "";
                 }),
-
             getFilteredTasks: () => {
                 const { tasks, searchQuery } = get();
                 if (!searchQuery) return tasks;

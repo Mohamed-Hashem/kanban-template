@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { DragDropContext } from "@hello-pangea/dnd";
 import { Box } from "@mui/material";
 import Column from "../Column";
@@ -7,82 +7,38 @@ import { useTasks } from "../../hooks";
 import useTaskStore from "../../store/taskStore";
 import { groupTasksByColumn } from "../../utils";
 
-/**
- * Board Component - Main Kanban board with drag-and-drop functionality
- * Manages task movement between columns and coordinates updates
- *
- * @param {Array} tasks - Array of tasks to display (can be filtered)
- * @param {Function} onAddTask - Callback for adding a new task
- */
-const Board = ({ tasks: propTasks, onAddTask }) => {
+const Board = ({ onAddTask }) => {
     const { patchTask } = useTasks();
     const { moveTask: moveTaskInStore, getFilteredTasks } = useTaskStore();
-    const [isDragging, setIsDragging] = useState(false);
 
     const tasks = getFilteredTasks();
     const tasksByColumn = groupTasksByColumn(tasks);
 
-    /**
-     * Handles drag start event
-     */
-    const handleDragStart = useCallback(() => {
-        setIsDragging(true);
-    }, []);
-
-    /**
-     * Handles drag end event
-     * Updates task column when dragged to a new column
-     */
     const handleDragEnd = useCallback(
         (result) => {
             const { destination, source, draggableId } = result;
 
-            // Reset dragging state immediately
-            setIsDragging(false);
-
-            // Dropped outside a valid droppable
-            if (!destination) {
-                return;
-            }
-
-            // Dropped in the same position
+            if (!destination) return;
             if (
                 destination.droppableId === source.droppableId &&
                 destination.index === source.index
-            ) {
+            )
                 return;
-            }
 
-            const taskId = draggableId; // Keep as string
             const newColumn = destination.droppableId;
             const oldColumn = source.droppableId;
 
-            // Only update if column changed
             if (newColumn !== oldColumn) {
-                console.log(`[Board] Moving task ${taskId} from ${oldColumn} to ${newColumn}`);
-
-                // Optimistic update in store IMMEDIATELY
-                moveTaskInStore(taskId, newColumn);
-
-                // Update via API (React Query cache will be updated in onSuccess)
-                patchTask.mutate({
-                    id: taskId,
-                    updates: { column: newColumn },
-                });
+                moveTaskInStore(draggableId, newColumn);
+                patchTask.mutate({ id: draggableId, updates: { column: newColumn } });
             }
         },
         [moveTaskInStore, patchTask]
     );
 
     return (
-        <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            <Box
-                sx={{
-                    width: "100%",
-                    backgroundColor: "#f5f7fa",
-                    overflow: "visible", // CRITICAL: No nested scroll
-                }}
-            >
+        <DragDropContext onDragEnd={handleDragEnd}>
+            <Box sx={{ width: "100%", backgroundColor: "#f5f7fa", overflow: "visible" }}>
                 <Box
                     sx={{
                         p: { xs: 1.5, sm: 2, md: 3 },
@@ -96,12 +52,11 @@ const Board = ({ tasks: propTasks, onAddTask }) => {
                         <Box
                             key={column.id}
                             sx={{
-                                // Responsive column widths with equal sizing in each row
                                 flex: {
-                                    xs: "1 1 100%", // 1 column per row on extra small screens
-                                    sm: "1 1 calc(50% - 8px)", // 2 columns per row on small screens
-                                    md: "1 1 calc(33.333% - 13.33px)", // 3 columns per row on medium screens
-                                    lg: "1 1 calc(25% - 15px)", // 4 columns per row on large screens
+                                    xs: "1 1 100%",
+                                    sm: "1 1 calc(50% - 8px)",
+                                    md: "1 1 calc(33.333% - 13.33px)",
+                                    lg: "1 1 calc(25% - 15px)",
                                 },
                                 minWidth: 0,
                                 display: "flex",

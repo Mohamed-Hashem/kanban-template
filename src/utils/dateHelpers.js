@@ -1,15 +1,5 @@
-/**
- * Date formatting and manipulation utilities
- */
-
-/**
- * Formats a date to a readable string
- * @param {string|Date} date - Date to format
- * @returns {string} Formatted date string
- */
 export const formatDate = (date) => {
     if (!date) return "";
-
     const d = new Date(date);
     const options = {
         year: "numeric",
@@ -18,18 +8,11 @@ export const formatDate = (date) => {
         hour: "2-digit",
         minute: "2-digit",
     };
-
     return d.toLocaleDateString("en-US", options);
 };
 
-/**
- * Returns relative time string (e.g., "2 hours ago")
- * @param {string|Date} date - Date to compare
- * @returns {string} Relative time string
- */
 export const getRelativeTime = (date) => {
     if (!date) return "";
-
     const now = new Date();
     const then = new Date(date);
     const diffMs = now - then;
@@ -42,20 +25,12 @@ export const getRelativeTime = (date) => {
     if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`;
     if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
     if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
-
     return formatDate(date);
 };
 
-/**
- * Checks if a date is today
- * @param {string|Date} date - Date to check
- * @returns {boolean} True if date is today
- */
 export const isToday = (date) => {
     if (!date) return false;
-
     const today = new Date();
     const checkDate = new Date(date);
-
     return today.toDateString() === checkDate.toDateString();
 };

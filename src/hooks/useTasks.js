@@ -37,10 +37,6 @@ export function useTasks() {
         }
     }, [tasks, setTasks]);
 
-    useEffect(() => {
-        if (error) console.error("Fetch error:", error);
-    }, [error]);
-
     const addTask = useMutation({
         mutationFn: createTask,
         onMutate: async (newTask) => {
@@ -51,10 +47,8 @@ export function useTasks() {
                 id: `temp-${Date.now()}`,
                 createdAt: new Date().toISOString(),
             };
-
             queryClient.setQueryData([QUERY_KEYS.TASKS], (old) => [...(old || []), optimisticTask]);
             addTaskToStore(optimisticTask);
-
             return { previousTasks, optimisticTask };
         },
         onSuccess: (data, _, context) => {
@@ -65,7 +59,6 @@ export function useTasks() {
         onError: (err, _, context) => {
             if (context?.previousTasks)
                 queryClient.setQueryData([QUERY_KEYS.TASKS], context.previousTasks);
-            console.error("Create error:", err);
         },
         onSettled: () => queryClient.invalidateQueries([QUERY_KEYS.TASKS]),
     });
@@ -84,7 +77,6 @@ export function useTasks() {
         onError: (err, _, context) => {
             if (context?.previousTasks)
                 queryClient.setQueryData([QUERY_KEYS.TASKS], context.previousTasks);
-            console.error("Update error:", err);
         },
         onSettled: () => queryClient.invalidateQueries([QUERY_KEYS.TASKS]),
     });
@@ -97,10 +89,7 @@ export function useTasks() {
             );
             updateTaskInStore(id, serverData);
         },
-        onError: (err) => {
-            console.error("Patch error:", err);
-            queryClient.invalidateQueries([QUERY_KEYS.TASKS]);
-        },
+        onError: () => queryClient.invalidateQueries([QUERY_KEYS.TASKS]),
     });
 
     const removeTask = useMutation({
@@ -117,7 +106,6 @@ export function useTasks() {
         onError: (err, _, context) => {
             if (context?.previousTasks)
                 queryClient.setQueryData([QUERY_KEYS.TASKS], context.previousTasks);
-            console.error("Delete error:", err);
         },
         onSettled: () => queryClient.invalidateQueries([QUERY_KEYS.TASKS]),
     });
@@ -132,7 +120,5 @@ export function useTasks() {
         editTask,
         patchTask: patchTaskMutation,
         removeTask,
-        taskCount: tasks.length,
-        isEmpty: tasks.length === 0,
     };
 }

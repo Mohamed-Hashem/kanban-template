@@ -4,24 +4,9 @@ import { Box, Paper, Typography, IconButton, Chip } from "@mui/material";
 import { ExpandMore as ExpandMoreIcon, Add as AddIcon } from "@mui/icons-material";
 import TaskCard from "../TaskCard";
 
-/**
- * Column Component - Kanban column with drag-and-drop
- * Displays all tasks in a droppable area
- *
- * @param {Object} column - Column configuration
- * @param {Array} tasks - Tasks to display in this column
- * @param {Function} onAddTask - Callback for adding a new task
- */
 const Column = ({ column, tasks, onAddTask }) => {
     const [expanded, setExpanded] = useState(true);
 
-    const handleToggleExpand = () => {
-        setExpanded((prev) => !prev);
-    };
-
-    const handleAddTask = () => {
-        onAddTask && onAddTask(column.id);
-    };
     return (
         <Paper
             elevation={2}
@@ -32,11 +17,10 @@ const Column = ({ column, tasks, onAddTask }) => {
                 flexDirection: "column",
                 backgroundColor: column.color,
                 borderRadius: 2,
-                overflow: "visible", // CRITICAL: Allow dragged items to be visible
+                overflow: "visible",
                 border: `2px solid ${column.accentColor}40`,
             }}
         >
-            {/* Column Header */}
             <Box
                 sx={{
                     p: { xs: 1.5, sm: 2 },
@@ -46,13 +30,14 @@ const Column = ({ column, tasks, onAddTask }) => {
                     justifyContent: "space-between",
                     backgroundColor: "rgba(255, 255, 255, 0.95)",
                     backdropFilter: "blur(10px)",
+                    borderRadius: "16px",
                     borderBottom: `3px solid ${column.accentColor}`,
                 }}
             >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1, minWidth: 0 }}>
                     <IconButton
                         size="small"
-                        onClick={handleToggleExpand}
+                        onClick={() => setExpanded(!expanded)}
                         sx={{
                             transform: expanded ? "rotate(0deg)" : "rotate(-90deg)",
                             transition: "transform 0.3s ease",
@@ -97,7 +82,7 @@ const Column = ({ column, tasks, onAddTask }) => {
 
                 <IconButton
                     size="small"
-                    onClick={handleAddTask}
+                    onClick={() => onAddTask?.(column.id)}
                     sx={{
                         color: column.accentColor,
                         backgroundColor: `${column.accentColor}15`,
@@ -113,7 +98,6 @@ const Column = ({ column, tasks, onAddTask }) => {
                 </IconButton>
             </Box>
 
-            {/* Column Description */}
             {expanded && column.description && (
                 <Typography
                     variant="caption"
@@ -132,7 +116,6 @@ const Column = ({ column, tasks, onAddTask }) => {
                 </Typography>
             )}
 
-            {/* Tasks Container - THE ONLY SCROLL CONTAINER */}
             {expanded && (
                 <Droppable droppableId={column.id}>
                     {(provided, snapshot) => (
@@ -142,7 +125,7 @@ const Column = ({ column, tasks, onAddTask }) => {
                             sx={{
                                 flex: 1,
                                 p: 2,
-                                overflowY: "auto", // Only scroll container
+                                overflowY: "auto",
                                 overflowX: "visible",
                                 minHeight: 200,
                                 maxHeight: "calc(100vh - 300px)",
@@ -150,10 +133,7 @@ const Column = ({ column, tasks, onAddTask }) => {
                                     ? `${column.accentColor}15`
                                     : "transparent",
                                 transition: "background-color 0.2s ease",
-                                // Custom scrollbar
-                                "&::-webkit-scrollbar": {
-                                    width: "6px",
-                                },
+                                "&::-webkit-scrollbar": { width: "6px" },
                                 "&::-webkit-scrollbar-track": {
                                     backgroundColor: "rgba(0, 0, 0, 0.05)",
                                     borderRadius: "4px",

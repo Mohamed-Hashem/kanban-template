@@ -2,10 +2,6 @@ import React from "react";
 import { Box, Typography, Button, Paper, Container } from "@mui/material";
 import { Error as ErrorIcon, Refresh as RefreshIcon } from "@mui/icons-material";
 
-/**
- * ErrorBoundary Component - Catches and handles React errors
- * Provides a user-friendly error UI with retry functionality
- */
 class ErrorBoundary extends React.Component {
     state = { hasError: false, error: null, errorInfo: null };
 
@@ -14,7 +10,7 @@ class ErrorBoundary extends React.Component {
     }
 
     componentDidCatch(error, errorInfo) {
-        console.error("Unhandled error caught by ErrorBoundary:", error, errorInfo);
+        console.error("ErrorBoundary caught:", error, errorInfo);
         this.setState({ errorInfo });
     }
 
@@ -37,36 +33,17 @@ class ErrorBoundary extends React.Component {
                     }}
                 >
                     <Container maxWidth="md">
-                        <Paper
-                            elevation={3}
-                            sx={{
-                                p: 4,
-                                textAlign: "center",
-                            }}
-                        >
-                            <ErrorIcon
-                                sx={{
-                                    fontSize: 80,
-                                    color: "error.main",
-                                    mb: 2,
-                                }}
-                            />
-
+                        <Paper elevation={3} sx={{ p: 4, textAlign: "center" }}>
+                            <ErrorIcon sx={{ fontSize: 80, color: "error.main", mb: 2 }} />
                             <Typography
                                 variant="h4"
-                                sx={{
-                                    fontWeight: 700,
-                                    color: "error.main",
-                                    mb: 2,
-                                }}
+                                sx={{ fontWeight: 700, color: "error.main", mb: 2 }}
                             >
                                 Oops! Something went wrong
                             </Typography>
-
                             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                                 {this.state.error?.message || "An unexpected error occurred"}
                             </Typography>
-
                             {process.env.NODE_ENV === "development" && this.state.errorInfo && (
                                 <Paper
                                     variant="outlined"
@@ -92,7 +69,6 @@ class ErrorBoundary extends React.Component {
                                     </Typography>
                                 </Paper>
                             )}
-
                             <Button
                                 variant="contained"
                                 size="large"

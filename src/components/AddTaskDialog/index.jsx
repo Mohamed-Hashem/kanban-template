@@ -13,69 +13,39 @@ import { COLUMN_ORDER, PRIORITIES } from "../../constants";
 import { useTasks } from "../../hooks";
 import { validateTask } from "../../utils";
 
-/**
- * AddTaskDialog Component - Modal for creating new tasks
- * Provides form validation and column selection
- *
- * @param {boolean} open - Dialog open state
- * @param {Function} onClose - Callback to close dialog
- * @param {string} defaultColumn - Default column for new task
- */
 const AddTaskDialog = ({ open, onClose, defaultColumn = "backlog" }) => {
     const { addTask } = useTasks();
-
     const [formData, setFormData] = useState({
         title: "",
         description: "",
         column: defaultColumn,
         priority: "medium",
     });
-
     const [errors, setErrors] = useState({});
 
-    // Update column when defaultColumn changes
     useEffect(() => {
-        if (open && defaultColumn) {
-            setFormData((prev) => ({ ...prev, column: defaultColumn }));
-        }
+        if (open && defaultColumn) setFormData((prev) => ({ ...prev, column: defaultColumn }));
     }, [open, defaultColumn]);
 
     const handleChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
-        // Clear error for this field
-        if (errors[field]) {
-            setErrors((prev) => ({ ...prev, [field]: null }));
-        }
+        if (errors[field]) setErrors((prev) => ({ ...prev, [field]: null }));
     };
 
     const handleSubmit = () => {
-        // Validate task
         const validation = validateTask(formData);
-
         if (!validation.isValid) {
             setErrors(validation.errors);
             return;
         }
-
-        // Create task
         addTask.mutate(formData, {
-            onSuccess: () => {
-                handleClose();
-            },
-            onError: (error) => {
-                setErrors({ submit: error.message || "Failed to create task" });
-            },
+            onSuccess: () => handleClose(),
+            onError: (error) => setErrors({ submit: error.message || "Failed to create task" }),
         });
     };
 
     const handleClose = () => {
-        // Reset form
-        setFormData({
-            title: "",
-            description: "",
-            column: defaultColumn,
-            priority: "medium",
-        });
+        setFormData({ title: "", description: "", column: defaultColumn, priority: "medium" });
         setErrors({});
         onClose();
     };
@@ -85,7 +55,6 @@ const AddTaskDialog = ({ open, onClose, defaultColumn = "backlog" }) => {
             <DialogTitle>Create New Task</DialogTitle>
             <DialogContent>
                 <Box sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
-                    {/* Title */}
                     <TextField
                         fullWidth
                         label="Task Title"
@@ -96,8 +65,6 @@ const AddTaskDialog = ({ open, onClose, defaultColumn = "backlog" }) => {
                         required
                         autoFocus
                     />
-
-                    {/* Description */}
                     <TextField
                         fullWidth
                         label="Description"
@@ -108,8 +75,6 @@ const AddTaskDialog = ({ open, onClose, defaultColumn = "backlog" }) => {
                         multiline
                         rows={4}
                     />
-
-                    {/* Column Selection */}
                     <TextField
                         fullWidth
                         select
@@ -123,8 +88,6 @@ const AddTaskDialog = ({ open, onClose, defaultColumn = "backlog" }) => {
                             </MenuItem>
                         ))}
                     </TextField>
-
-                    {/* Priority Selection */}
                     <TextField
                         fullWidth
                         select
@@ -138,8 +101,6 @@ const AddTaskDialog = ({ open, onClose, defaultColumn = "backlog" }) => {
                             </MenuItem>
                         ))}
                     </TextField>
-
-                    {/* Error Message */}
                     {errors.submit && (
                         <Box sx={{ color: "error.main", fontSize: "0.875rem" }}>
                             {errors.submit}
