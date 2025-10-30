@@ -2,6 +2,8 @@
 
 A modern, production-ready Kanban board application built with React, Material-UI, Zustand, and React Query. Features smooth drag-and-drop, real-time search, and optimistic updates.
 
+🚀 **[Live Demo](https://kanban-template-peach.vercel.app/)**
+
 ![React](https://img.shields.io/badge/React-19.1-blue)
 ![Vite](https://img.shields.io/badge/Vite-7.1-purple)
 ![Material-UI](https://img.shields.io/badge/Material--UI-7.3-blue)
