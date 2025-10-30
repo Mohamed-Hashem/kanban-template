@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Draggable } from "@hello-pangea/dnd";
 import {
     Card,
@@ -84,16 +84,23 @@ const TaskCard = ({ task, index }) => {
                         {...provided.dragHandleProps}
                         sx={{
                             mb: 2,
-                            cursor: snapshot.isDragging ? "grabbing" : "grab",
+                            cursor: snapshot.isDragging ? "grabbing !important" : "grab",
+                            opacity: snapshot.isDragging ? 0.7 : 1,
                             backgroundColor: snapshot.isDragging
-                                ? "action.hover"
+                                ? "primary.light"
                                 : "background.paper",
-                            boxShadow: snapshot.isDragging ? 6 : 1,
-                            transform: snapshot.isDragging ? "rotate(2deg)" : "none",
-                            transition: "all 0.2s ease",
+                            boxShadow: snapshot.isDragging ? 8 : 2,
+                            transform: snapshot.isDragging ? "rotate(3deg) scale(1.05)" : "none",
+                            transition: snapshot.isDragging ? "none" : "all 0.2s ease",
+                            border: snapshot.isDragging ? "2px solid" : "1px solid",
+                            borderColor: snapshot.isDragging ? "primary.main" : "divider",
+                            userSelect: "none",
+                            WebkitUserSelect: "none",
                             "&:hover": {
-                                boxShadow: 3,
-                                transform: snapshot.isDragging ? "none" : "translateY(-2px)",
+                                boxShadow: snapshot.isDragging ? 8 : 4,
+                                transform: snapshot.isDragging
+                                    ? "rotate(3deg) scale(1.05)"
+                                    : "translateY(-2px)",
                             },
                         }}
                     >
@@ -291,4 +298,4 @@ const TaskCard = ({ task, index }) => {
     );
 };
 
-export default TaskCard;
+export default memo(TaskCard);

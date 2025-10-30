@@ -15,12 +15,12 @@ import { groupTasksByColumn } from "../../utils";
  * @param {Function} onAddTask - Callback for adding a new task
  */
 const Board = ({ tasks: propTasks, onAddTask }) => {
-    const { tasks: fetchedTasks, patchTask } = useTasks();
-    const { moveTask: moveTaskInStore, getFilteredTasks, tasks: storeTasks } = useTaskStore();
+    const { patchTask } = useTasks();
+    const { moveTask: moveTaskInStore, tasks: storeTasks } = useTaskStore();
     const [isDragging, setIsDragging] = useState(false);
 
-    // Use provided tasks, or all tasks from store (not filtered during drag)
-    const tasks = propTasks !== undefined ? propTasks : storeTasks;
+    // Always use store tasks directly (ignore filtered tasks during drag)
+    const tasks = storeTasks || [];
 
     // Group tasks by column
     const tasksByColumn = groupTasksByColumn(tasks);
@@ -38,9 +38,10 @@ const Board = ({ tasks: propTasks, onAddTask }) => {
      */
     const handleDragEnd = useCallback(
         (result) => {
-            setIsDragging(false);
-
             const { destination, source, draggableId } = result;
+
+            // Reset dragging state immediately
+            setIsDragging(false);
 
             // Dropped outside a valid droppable
             if (!destination) {
@@ -59,28 +60,18 @@ const Board = ({ tasks: propTasks, onAddTask }) => {
             const newColumn = destination.droppableId;
             const oldColumn = source.droppableId;
 
-            console.log(`[Drag] Moving task ${taskId} from ${oldColumn} to ${newColumn}`);
-
-            // Optimistic update in store first
-            moveTaskInStore(taskId, newColumn, destination.index);
-
-            // Update via API if column changed
+            // Only update if column changed
             if (newColumn !== oldColumn) {
-                patchTask.mutate(
-                    {
-                        id: taskId,
-                        updates: { column: newColumn },
-                    },
-                    {
-                        onError: (error) => {
-                            console.error("[Drag] API update failed:", error);
-                            // Optionally revert the change here
-                        },
-                        onSuccess: () => {
-                            console.log("[Drag] API update successful");
-                        },
-                    }
-                );
+                console.log(`[Board] Moving task ${taskId} from ${oldColumn} to ${newColumn}`);
+                
+                // Optimistic update in store IMMEDIATELY
+                moveTaskInStore(taskId, newColumn, destination.index);
+
+                // Update via API (React Query cache will be updated in onSuccess)
+                patchTask.mutate({
+                    id: taskId,
+                    updates: { column: newColumn },
+                });
             }
         },
         [moveTaskInStore, patchTask]
@@ -92,7 +83,7 @@ const Board = ({ tasks: propTasks, onAddTask }) => {
                 sx={{
                     width: "100%",
                     backgroundColor: "#f5f7fa",
-                    overflow: "auto",
+                    overflow: "visible", // CRITICAL: No nested scroll
                 }}
             >
                 <Box

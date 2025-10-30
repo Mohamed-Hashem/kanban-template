@@ -15,7 +15,6 @@ const useTaskStore = create(
             tasks: [],
             selectedTask: null,
             searchQuery: "",
-            filterColumn: null,
             isLoading: false,
             error: null,
 
@@ -48,13 +47,11 @@ const useTaskStore = create(
                     // Convert to string for comparison since IDs can be strings or numbers
                     const taskIndex = state.tasks.findIndex((t) => String(t.id) === String(id));
                     if (taskIndex !== -1) {
-                        // Mutate directly for immer
+                        // With immer, directly mutate the properties
                         state.tasks[taskIndex].column = newColumn;
                         state.tasks[taskIndex].updatedAt = new Date().toISOString();
-                        console.log(
-                            `[Store] Moved task ${id} to ${newColumn}`,
-                            state.tasks[taskIndex]
-                        );
+
+                        console.log(`[Store] Moved task ${id} to ${newColumn}`, state.tasks[taskIndex]);
                     } else {
                         console.error(`[Store] Task ${id} not found in tasks array`);
                     }
@@ -71,21 +68,15 @@ const useTaskStore = create(
                     state.selectedTask = null;
                 }),
 
-            // Actions - Search and Filter
+            // Actions - Search
             setSearchQuery: (query) =>
                 set((state) => {
                     state.searchQuery = query;
                 }),
 
-            setFilterColumn: (column) =>
-                set((state) => {
-                    state.filterColumn = column;
-                }),
-
-            clearFilters: () =>
+            clearSearch: () =>
                 set((state) => {
                     state.searchQuery = "";
-                    state.filterColumn = null;
                 }),
 
             // Actions - UI State
@@ -114,12 +105,7 @@ const useTaskStore = create(
                 const state = get();
                 let filtered = state.tasks;
 
-                // Apply column filter
-                if (state.filterColumn) {
-                    filtered = filtered.filter((task) => task.column === state.filterColumn);
-                }
-
-                // Apply search query
+                // Apply search query only
                 if (state.searchQuery) {
                     const query = state.searchQuery.toLowerCase();
                     filtered = filtered.filter(
@@ -149,7 +135,6 @@ const useTaskStore = create(
             partialize: (state) => ({
                 tasks: state.tasks,
                 searchQuery: state.searchQuery,
-                filterColumn: state.filterColumn,
             }),
         }
     )

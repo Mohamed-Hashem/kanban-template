@@ -1,13 +1,12 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Droppable } from "@hello-pangea/dnd";
-import { Box, Paper, Typography, IconButton, Divider, Chip } from "@mui/material";
+import { Box, Paper, Typography, IconButton, Chip } from "@mui/material";
 import { ExpandMore as ExpandMoreIcon, Add as AddIcon } from "@mui/icons-material";
 import TaskCard from "../TaskCard";
-import { PAGINATION } from "../../constants";
 
 /**
- * Column Component - Kanban column with drag-and-drop and infinite scroll
- * Displays tasks in a droppable area with pagination support
+ * Column Component - Kanban column with drag-and-drop
+ * Displays all tasks in a droppable area
  *
  * @param {Object} column - Column configuration
  * @param {Array} tasks - Tasks to display in this column
@@ -15,18 +14,6 @@ import { PAGINATION } from "../../constants";
  */
 const Column = ({ column, tasks, onAddTask }) => {
     const [expanded, setExpanded] = useState(true);
-    const [displayCount, setDisplayCount] = useState(PAGINATION.ITEMS_PER_PAGE);
-
-    // Paginated tasks
-    const displayedTasks = useMemo(() => {
-        return tasks.slice(0, displayCount);
-    }, [tasks, displayCount]);
-
-    const hasMore = displayCount < tasks.length;
-
-    const loadMore = () => {
-        setDisplayCount((prev) => prev + PAGINATION.ITEMS_PER_PAGE);
-    };
 
     const handleToggleExpand = () => {
         setExpanded((prev) => !prev);
@@ -37,21 +24,16 @@ const Column = ({ column, tasks, onAddTask }) => {
     };
     return (
         <Paper
-            elevation={3}
+            elevation={2}
             sx={{
                 width: "100%",
                 height: "100%",
                 display: "flex",
                 flexDirection: "column",
                 backgroundColor: column.color,
-                borderRadius: { xs: 2, md: 3 },
-                overflow: "hidden",
+                borderRadius: 2,
+                overflow: "visible", // CRITICAL: Allow dragged items to be visible
                 border: `2px solid ${column.accentColor}40`,
-                transition: "all 0.3s ease",
-                "&:hover": {
-                    boxShadow: 6,
-                    transform: "translateY(-2px)",
-                },
             }}
         >
             {/* Column Header */}
@@ -150,7 +132,7 @@ const Column = ({ column, tasks, onAddTask }) => {
                 </Typography>
             )}
 
-            {/* Tasks Container */}
+            {/* Tasks Container - THE ONLY SCROLL CONTAINER */}
             {expanded && (
                 <Droppable droppableId={column.id}>
                     {(provided, snapshot) => (
@@ -159,29 +141,26 @@ const Column = ({ column, tasks, onAddTask }) => {
                             {...provided.droppableProps}
                             sx={{
                                 flex: 1,
-                                p: { xs: 1.5, sm: 2 },
-                                pt: { xs: 1, sm: 1.5 },
-                                overflowY: "auto",
-                                overflowX: "hidden",
-                                minHeight: { xs: 150, sm: 200 },
-                                maxHeight: { xs: "calc(100vh - 250px)", sm: "calc(100vh - 280px)" },
+                                p: 2,
+                                overflowY: "auto", // Only scroll container
+                                overflowX: "visible",
+                                minHeight: 200,
+                                maxHeight: "calc(100vh - 300px)",
                                 backgroundColor: snapshot.isDraggingOver
-                                    ? `${column.accentColor}20`
+                                    ? `${column.accentColor}15`
                                     : "transparent",
-                                transition: "background-color 0.3s ease",
+                                transition: "background-color 0.2s ease",
+                                // Custom scrollbar
                                 "&::-webkit-scrollbar": {
                                     width: "6px",
                                 },
                                 "&::-webkit-scrollbar-track": {
                                     backgroundColor: "rgba(0, 0, 0, 0.05)",
-                                    borderRadius: "10px",
+                                    borderRadius: "4px",
                                 },
                                 "&::-webkit-scrollbar-thumb": {
                                     backgroundColor: column.accentColor,
-                                    borderRadius: "10px",
-                                    "&:hover": {
-                                        backgroundColor: `${column.accentColor}DD`,
-                                    },
+                                    borderRadius: "4px",
                                 },
                             }}
                         >
@@ -189,62 +168,19 @@ const Column = ({ column, tasks, onAddTask }) => {
                                 <Box
                                     sx={{
                                         textAlign: "center",
-                                        py: { xs: 3, sm: 4 },
+                                        py: 4,
                                         color: "text.secondary",
                                     }}
                                 >
-                                    <Typography
-                                        variant="body2"
-                                        sx={{ fontSize: { xs: "0.875rem", sm: "1rem" } }}
-                                    >
-                                        No tasks yet
-                                    </Typography>
-                                    <Typography
-                                        variant="caption"
-                                        sx={{ fontSize: { xs: "0.7rem", sm: "0.75rem" } }}
-                                    >
+                                    <Typography variant="body2">No tasks yet</Typography>
+                                    <Typography variant="caption">
                                         Drag tasks here or click + to add
                                     </Typography>
                                 </Box>
                             ) : (
-                                <>
-                                    {displayedTasks.map((task, index) => (
-                                        <TaskCard key={task.id} task={task} index={index} />
-                                    ))}
-                                    {hasMore && (
-                                        <Box
-                                            sx={{
-                                                textAlign: "center",
-                                                mt: 2,
-                                                mb: 1,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                onClick={loadMore}
-                                                sx={{
-                                                    color: column.accentColor,
-                                                    border: `2px dashed ${column.accentColor}60`,
-                                                    borderRadius: 2,
-                                                    px: 2,
-                                                    py: 0.5,
-                                                    "&:hover": {
-                                                        backgroundColor: `${column.accentColor}15`,
-                                                        borderColor: column.accentColor,
-                                                    },
-                                                }}
-                                            >
-                                                <Typography
-                                                    variant="caption"
-                                                    sx={{ fontSize: "0.75rem", fontWeight: 600 }}
-                                                >
-                                                    Load more ({tasks.length - displayCount}{" "}
-                                                    remaining)
-                                                </Typography>
-                                            </IconButton>
-                                        </Box>
-                                    )}
-                                </>
+                                tasks.map((task, index) => (
+                                    <TaskCard key={task.id} task={task} index={index} />
+                                ))
                             )}
                             {provided.placeholder}
                         </Box>

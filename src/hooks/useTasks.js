@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { getTasks, createTask, updateTask, deleteTask, patchTask } from "../api";
 import { QUERY_KEYS } from "../constants";
 import useTaskStore from "../store/taskStore";
@@ -17,6 +17,8 @@ export function useTasks() {
         removeTask: removeTaskFromStore,
     } = useTaskStore();
 
+    const hasInitialized = useRef(false);
+
     // Fetch all tasks
     const {
         data: tasks = [],
@@ -31,12 +33,15 @@ export function useTasks() {
         gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
     });
 
-    // Sync tasks with Zustand store when data changes
+    // Sync tasks with Zustand store ONLY on initial load
+    // This prevents overwriting optimistic updates during drag operations
     useEffect(() => {
-        if (tasks && tasks.length > 0) {
+        if (tasks && tasks.length > 0 && !hasInitialized.current) {
             setTasks(tasks);
+            hasInitialized.current = true;
         }
-    }, [tasks]); // Remove setTasks from dependencies to prevent infinite loop
+        // DON'T sync on every tasks change - only on initial load
+    }, [tasks, setTasks]);
 
     // Log errors when they occur
     useEffect(() => {
@@ -112,35 +117,25 @@ export function useTasks() {
         },
     });
 
-    // Patch task mutation (partial update)
+    // Patch task mutation (partial update) - FOR DRAG AND DROP
     const patchTaskMutation = useMutation({
         mutationFn: ({ id, updates }) => patchTask(id, updates),
-        onMutate: async ({ id, updates }) => {
-            await queryClient.cancelQueries([QUERY_KEYS.TASKS]);
-            const previousTasks = queryClient.getQueryData([QUERY_KEYS.TASKS]);
-
-            // Optimistic update
+        onSuccess: (serverData, { id, updates }) => {
+            // Update React Query cache with server response
             queryClient.setQueryData([QUERY_KEYS.TASKS], (old) =>
-                (old || []).map((task) => (task.id === id ? { ...task, ...updates } : task))
+                (old || []).map((task) => (String(task.id) === String(id) ? serverData : task))
             );
-            updateTaskInStore(id, updates);
-
-            return { previousTasks };
+            
+            // CRITICAL: Update Zustand with the exact server data to keep them in sync
+            updateTaskInStore(id, serverData);
+            
+            console.log(`[useTasks] Updated task ${id} with server data`, serverData);
         },
-        onSuccess: (data, { id, updates }) => {
-            // Update with server response
-            queryClient.setQueryData([QUERY_KEYS.TASKS], (old) =>
-                (old || []).map((task) => (task.id === id ? data : task))
-            );
-            updateTaskInStore(id, data);
-        },
-        onError: (error, variables, context) => {
-            if (context?.previousTasks) {
-                queryClient.setQueryData([QUERY_KEYS.TASKS], context.previousTasks);
-            }
+        onError: (error, { id }, context) => {
             console.error("[useTasks] Error patching task:", error);
+            // On error, refetch to get correct state
+            queryClient.invalidateQueries([QUERY_KEYS.TASKS]);
         },
-        // Don't invalidate queries on drag operations - rely on optimistic updates
     });
 
     // Delete task mutation

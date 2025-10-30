@@ -21,7 +21,6 @@ function Home() {
     const [darkMode, setDarkMode] = useState(false);
     const [openAddDialog, setOpenAddDialog] = useState(false);
     const [selectedColumn, setSelectedColumn] = useState("backlog");
-    const { searchQuery, setSearchQuery, filterColumn, setFilterColumn } = useTaskStore();
 
     const handleToggleDarkMode = () => {
         setDarkMode(!darkMode);
@@ -74,7 +73,7 @@ function Home() {
 
             {/* Main Content */}
             <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-                {/* Search and Filter Bar */}
+                {/* Search Bar */}
                 <Box
                     sx={{
                         mb: 3,
@@ -95,16 +94,11 @@ function Home() {
                             minWidth: { sm: "50%" },
                         }}
                     >
-                        <SearchBar
-                            searchQuery={searchQuery}
-                            setSearchQuery={setSearchQuery}
-                            filterStatus={filterColumn}
-                            setFilterStatus={setFilterColumn}
-                        />
+                        <SearchBar />
                     </Box>
                 </Box>
 
-                {/* Kanban Board */}
+                {/* Kanban Board - No props needed, Board uses store directly */}
                 <Board onAddTask={handleAddTask} />
             </Box>
 
