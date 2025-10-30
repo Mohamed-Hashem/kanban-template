@@ -4,10 +4,6 @@ import { getTasks, createTask, updateTask, deleteTask, patchTask } from "../api"
 import { QUERY_KEYS } from "../constants";
 import useTaskStore from "../store/taskStore";
 
-/**
- * Enhanced React Query hook for task management
- * Integrates with Zustand store for optimistic updates and caching
- */
 export function useTasks() {
     const queryClient = useQueryClient();
     const {
@@ -16,10 +12,8 @@ export function useTasks() {
         updateTask: updateTaskInStore,
         removeTask: removeTaskFromStore,
     } = useTaskStore();
-
     const hasInitialized = useRef(false);
 
-    // Fetch all tasks
     const {
         data: tasks = [],
         isLoading,
@@ -29,38 +23,29 @@ export function useTasks() {
     } = useQuery({
         queryKey: [QUERY_KEYS.TASKS],
         queryFn: getTasks,
-        staleTime: 1000 * 60 * 5, // 5 minutes
-        gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
+        staleTime: 300000,
+        gcTime: 600000,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        refetchOnReconnect: false,
     });
 
-    // Sync tasks with Zustand store ONLY on initial load
-    // This prevents overwriting optimistic updates during drag operations
     useEffect(() => {
-        if (tasks && tasks.length > 0 && !hasInitialized.current) {
+        if (tasks?.length > 0 && !hasInitialized.current) {
             setTasks(tasks);
             hasInitialized.current = true;
         }
-        // DON'T sync on every tasks change - only on initial load
     }, [tasks, setTasks]);
 
-    // Log errors when they occur
     useEffect(() => {
-        if (error) {
-            console.error("[useTasks] Error fetching tasks:", error);
-        }
+        if (error) console.error("Fetch error:", error);
     }, [error]);
 
-    // Create task mutation
     const addTask = useMutation({
         mutationFn: createTask,
         onMutate: async (newTask) => {
-            // Cancel outgoing refetches
             await queryClient.cancelQueries([QUERY_KEYS.TASKS]);
-
-            // Snapshot previous value
             const previousTasks = queryClient.getQueryData([QUERY_KEYS.TASKS]);
-
-            // Optimistically update
             const optimisticTask = {
                 ...newTask,
                 id: `temp-${Date.now()}`,
@@ -72,96 +57,69 @@ export function useTasks() {
 
             return { previousTasks, optimisticTask };
         },
-        onSuccess: (data, variables, context) => {
-            // Replace optimistic task with real one
+        onSuccess: (data, _, context) => {
             queryClient.setQueryData([QUERY_KEYS.TASKS], (old) =>
                 (old || []).map((task) => (task.id === context.optimisticTask.id ? data : task))
             );
         },
-        onError: (error, variables, context) => {
-            // Rollback on error
-            if (context?.previousTasks) {
+        onError: (err, _, context) => {
+            if (context?.previousTasks)
                 queryClient.setQueryData([QUERY_KEYS.TASKS], context.previousTasks);
-            }
-            console.error("[useTasks] Error creating task:", error);
+            console.error("Create error:", err);
         },
-        onSettled: () => {
-            // Always refetch after mutation
-            queryClient.invalidateQueries([QUERY_KEYS.TASKS]);
-        },
+        onSettled: () => queryClient.invalidateQueries([QUERY_KEYS.TASKS]),
     });
 
-    // Update task mutation
     const editTask = useMutation({
         mutationFn: updateTask,
         onMutate: async (updatedTask) => {
             await queryClient.cancelQueries([QUERY_KEYS.TASKS]);
             const previousTasks = queryClient.getQueryData([QUERY_KEYS.TASKS]);
-
-            // Optimistic update
             queryClient.setQueryData([QUERY_KEYS.TASKS], (old) =>
                 (old || []).map((task) => (task.id === updatedTask.id ? updatedTask : task))
             );
             updateTaskInStore(updatedTask.id, updatedTask);
-
             return { previousTasks };
         },
-        onError: (error, variables, context) => {
-            if (context?.previousTasks) {
+        onError: (err, _, context) => {
+            if (context?.previousTasks)
                 queryClient.setQueryData([QUERY_KEYS.TASKS], context.previousTasks);
-            }
-            console.error("[useTasks] Error updating task:", error);
+            console.error("Update error:", err);
         },
-        onSettled: () => {
-            queryClient.invalidateQueries([QUERY_KEYS.TASKS]);
-        },
+        onSettled: () => queryClient.invalidateQueries([QUERY_KEYS.TASKS]),
     });
 
-    // Patch task mutation (partial update) - FOR DRAG AND DROP
     const patchTaskMutation = useMutation({
         mutationFn: ({ id, updates }) => patchTask(id, updates),
-        onSuccess: (serverData, { id, updates }) => {
-            // Update React Query cache with server response
+        onSuccess: (serverData, { id }) => {
             queryClient.setQueryData([QUERY_KEYS.TASKS], (old) =>
                 (old || []).map((task) => (String(task.id) === String(id) ? serverData : task))
             );
-            
-            // CRITICAL: Update Zustand with the exact server data to keep them in sync
             updateTaskInStore(id, serverData);
-            
-            console.log(`[useTasks] Updated task ${id} with server data`, serverData);
         },
-        onError: (error, { id }, context) => {
-            console.error("[useTasks] Error patching task:", error);
-            // On error, refetch to get correct state
+        onError: (err) => {
+            console.error("Patch error:", err);
             queryClient.invalidateQueries([QUERY_KEYS.TASKS]);
         },
     });
 
-    // Delete task mutation
     const removeTask = useMutation({
         mutationFn: deleteTask,
         onMutate: async (id) => {
             await queryClient.cancelQueries([QUERY_KEYS.TASKS]);
             const previousTasks = queryClient.getQueryData([QUERY_KEYS.TASKS]);
-
-            // Optimistic delete
             queryClient.setQueryData([QUERY_KEYS.TASKS], (old) =>
                 (old || []).filter((task) => task.id !== id)
             );
             removeTaskFromStore(id);
-
             return { previousTasks };
         },
-        onError: (error, variables, context) => {
-            if (context?.previousTasks) {
+        onError: (err, _, context) => {
+            if (context?.previousTasks)
                 queryClient.setQueryData([QUERY_KEYS.TASKS], context.previousTasks);
-            }
-            console.error("[useTasks] Error deleting task:", error);
+            console.error("Delete error:", err);
         },
-        onSettled: () => {
-            queryClient.invalidateQueries([QUERY_KEYS.TASKS]);
-        },
+        onSettled: () => queryClient.invalidateQueries([QUERY_KEYS.TASKS]),
     });
 
     return {
@@ -174,7 +132,6 @@ export function useTasks() {
         editTask,
         patchTask: patchTaskMutation,
         removeTask,
-        // Computed values
         taskCount: tasks.length,
         isEmpty: tasks.length === 0,
     };

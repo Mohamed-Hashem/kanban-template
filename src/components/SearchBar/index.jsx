@@ -1,31 +1,17 @@
-import { useState } from "react";
-import { Box, TextField, InputAdornment, IconButton, Chip, Tooltip, Paper } from "@mui/material";
-import {
-    Search as SearchIcon,
-    Clear as ClearIcon,
-    FilterList as FilterIcon,
-} from "@mui/icons-material";
+import { useState, useEffect } from "react";
+import { Box, TextField, InputAdornment, IconButton } from "@mui/material";
+import { Search as SearchIcon, Clear as ClearIcon } from "@mui/icons-material";
 import { useDebounce } from "../../hooks";
 import useTaskStore from "../../store/taskStore";
-import { COLUMN_ORDER } from "../../constants";
 
-/**
- * SearchBar Component - Global search and filter for tasks
- * Provides real-time search with debouncing and column filtering
- */
 const SearchBar = () => {
     const [localSearch, setLocalSearch] = useState("");
     const debouncedSearch = useDebounce(localSearch, 300);
+    const { setSearchQuery } = useTaskStore();
 
-    const { searchQuery, filterColumn, setSearchQuery, setFilterColumn, clearFilters } =
-        useTaskStore();
-
-    // Update store with debounced value
-    useState(() => {
-        if (debouncedSearch !== searchQuery) {
-            setSearchQuery(debouncedSearch);
-        }
-    }, [debouncedSearch]);
+    useEffect(() => {
+        setSearchQuery(debouncedSearch);
+    }, [debouncedSearch, setSearchQuery]);
 
     const handleSearchChange = (event) => {
         setLocalSearch(event.target.value);
@@ -36,33 +22,17 @@ const SearchBar = () => {
         setSearchQuery("");
     };
 
-    const handleFilterClick = (columnId) => {
-        if (filterColumn === columnId) {
-            setFilterColumn(null);
-        } else {
-            setFilterColumn(columnId);
-        }
-    };
-
-    const handleClearFilters = () => {
-        handleClearSearch();
-        clearFilters();
-    };
-
-    const hasActiveFilters = localSearch || filterColumn;
-
     return (
-        <Paper
-            elevation={1}
+        <Box
             sx={{
                 p: 2,
                 mb: 2,
                 display: "flex",
-                flexDirection: "column",
-                gap: 2,
+                backgroundColor: "background.paper",
+                borderRadius: 2,
+                boxShadow: 1,
             }}
         >
-            {/* Search Input */}
             <TextField
                 fullWidth
                 placeholder="Search tasks by title or description..."
@@ -82,53 +52,8 @@ const SearchBar = () => {
                         </InputAdornment>
                     ),
                 }}
-                sx={{
-                    "& .MuiOutlinedInput-root": {
-                        backgroundColor: "background.paper",
-                    },
-                }}
             />
-
-            {/* Filter Chips */}
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
-                <Tooltip title="Filter by column">
-                    <FilterIcon sx={{ color: "action.active", mr: 1 }} fontSize="small" />
-                </Tooltip>
-
-                {COLUMN_ORDER.map((column) => (
-                    <Chip
-                        key={column.id}
-                        label={column.title}
-                        onClick={() => handleFilterClick(column.id)}
-                        variant={filterColumn === column.id ? "filled" : "outlined"}
-                        sx={{
-                            backgroundColor:
-                                filterColumn === column.id ? column.accentColor : "transparent",
-                            color: filterColumn === column.id ? "white" : "text.primary",
-                            borderColor: column.accentColor,
-                            "&:hover": {
-                                backgroundColor:
-                                    filterColumn === column.id
-                                        ? column.accentColor
-                                        : `${column.accentColor}20`,
-                            },
-                        }}
-                    />
-                ))}
-
-                {hasActiveFilters && (
-                    <Chip
-                        label="Clear All"
-                        onClick={handleClearFilters}
-                        color="error"
-                        variant="outlined"
-                        deleteIcon={<ClearIcon />}
-                        onDelete={handleClearFilters}
-                        sx={{ ml: "auto" }}
-                    />
-                )}
-            </Box>
-        </Paper>
+        </Box>
     );
 };
 

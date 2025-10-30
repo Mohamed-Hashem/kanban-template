@@ -16,13 +16,10 @@ import { groupTasksByColumn } from "../../utils";
  */
 const Board = ({ tasks: propTasks, onAddTask }) => {
     const { patchTask } = useTasks();
-    const { moveTask: moveTaskInStore, tasks: storeTasks } = useTaskStore();
+    const { moveTask: moveTaskInStore, getFilteredTasks } = useTaskStore();
     const [isDragging, setIsDragging] = useState(false);
 
-    // Always use store tasks directly (ignore filtered tasks during drag)
-    const tasks = storeTasks || [];
-
-    // Group tasks by column
+    const tasks = getFilteredTasks();
     const tasksByColumn = groupTasksByColumn(tasks);
 
     /**
@@ -63,9 +60,9 @@ const Board = ({ tasks: propTasks, onAddTask }) => {
             // Only update if column changed
             if (newColumn !== oldColumn) {
                 console.log(`[Board] Moving task ${taskId} from ${oldColumn} to ${newColumn}`);
-                
+
                 // Optimistic update in store IMMEDIATELY
-                moveTaskInStore(taskId, newColumn, destination.index);
+                moveTaskInStore(taskId, newColumn);
 
                 // Update via API (React Query cache will be updated in onSuccess)
                 patchTask.mutate({

@@ -3,22 +3,13 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { STORAGE_KEYS } from "../constants";
 
-/**
- * Advanced Zustand store with persistence, immer for immutable updates,
- * and comprehensive task management actions
- */
-
 const useTaskStore = create(
     persist(
         immer((set, get) => ({
-            // State
             tasks: [],
             selectedTask: null,
             searchQuery: "",
-            isLoading: false,
-            error: null,
 
-            // Actions - Task Management
             setTasks: (tasks) =>
                 set((state) => {
                     state.tasks = tasks;
@@ -31,10 +22,8 @@ const useTaskStore = create(
 
             updateTask: (id, updates) =>
                 set((state) => {
-                    const taskIndex = state.tasks.findIndex((t) => t.id === id);
-                    if (taskIndex !== -1) {
-                        state.tasks[taskIndex] = { ...state.tasks[taskIndex], ...updates };
-                    }
+                    const index = state.tasks.findIndex((t) => t.id === id);
+                    if (index !== -1) state.tasks[index] = { ...state.tasks[index], ...updates };
                 }),
 
             removeTask: (id) =>
@@ -42,100 +31,48 @@ const useTaskStore = create(
                     state.tasks = state.tasks.filter((t) => t.id !== id);
                 }),
 
-            moveTask: (id, newColumn, newIndex) =>
+            moveTask: (id, newColumn) =>
                 set((state) => {
-                    // Convert to string for comparison since IDs can be strings or numbers
-                    const taskIndex = state.tasks.findIndex((t) => String(t.id) === String(id));
-                    if (taskIndex !== -1) {
-                        // With immer, directly mutate the properties
-                        state.tasks[taskIndex].column = newColumn;
-                        state.tasks[taskIndex].updatedAt = new Date().toISOString();
-
-                        console.log(`[Store] Moved task ${id} to ${newColumn}`, state.tasks[taskIndex]);
-                    } else {
-                        console.error(`[Store] Task ${id} not found in tasks array`);
+                    const index = state.tasks.findIndex((t) => String(t.id) === String(id));
+                    if (index !== -1) {
+                        state.tasks[index].column = newColumn;
+                        state.tasks[index].updatedAt = new Date().toISOString();
                     }
                 }),
 
-            // Actions - Task Selection
             selectTask: (task) =>
                 set((state) => {
                     state.selectedTask = task;
                 }),
-
             clearSelectedTask: () =>
                 set((state) => {
                     state.selectedTask = null;
                 }),
 
-            // Actions - Search
             setSearchQuery: (query) =>
                 set((state) => {
                     state.searchQuery = query;
                 }),
-
             clearSearch: () =>
                 set((state) => {
                     state.searchQuery = "";
                 }),
 
-            // Actions - UI State
-            setLoading: (isLoading) =>
-                set((state) => {
-                    state.isLoading = isLoading;
-                }),
-
-            setError: (error) =>
-                set((state) => {
-                    state.error = error;
-                }),
-
-            clearError: () =>
-                set((state) => {
-                    state.error = null;
-                }),
-
-            // Computed getters (called as methods)
-            getTasksByColumn: (column) => {
-                const state = get();
-                return state.tasks.filter((task) => task.column === column);
-            },
-
             getFilteredTasks: () => {
-                const state = get();
-                let filtered = state.tasks;
-
-                // Apply search query only
-                if (state.searchQuery) {
-                    const query = state.searchQuery.toLowerCase();
-                    filtered = filtered.filter(
-                        (task) =>
-                            task.title?.toLowerCase().includes(query) ||
-                            task.description?.toLowerCase().includes(query)
-                    );
-                }
-
-                return filtered;
-            },
-
-            getTaskCount: () => {
-                const state = get();
-                return state.tasks.length;
-            },
-
-            getTaskCountByColumn: (column) => {
-                const state = get();
-                return state.tasks.filter((task) => task.column === column).length;
+                const { tasks, searchQuery } = get();
+                if (!searchQuery) return tasks;
+                const query = searchQuery.toLowerCase();
+                return tasks.filter(
+                    (t) =>
+                        t.title?.toLowerCase().includes(query) ||
+                        t.description?.toLowerCase().includes(query)
+                );
             },
         })),
         {
             name: STORAGE_KEYS.TASK_STORE,
             storage: createJSONStorage(() => localStorage),
-            // Only persist certain fields
-            partialize: (state) => ({
-                tasks: state.tasks,
-                searchQuery: state.searchQuery,
-            }),
+            partialize: (state) => ({ tasks: state.tasks, searchQuery: state.searchQuery }),
         }
     )
 );
