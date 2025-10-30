@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { getTasks, createTask, updateTask, deleteTask, patchTask } from "../api";
 import { QUERY_KEYS } from "../constants";
 import useTaskStore from "../store/taskStore";
@@ -27,15 +28,22 @@ export function useTasks() {
         queryKey: [QUERY_KEYS.TASKS],
         queryFn: getTasks,
         staleTime: 1000 * 60 * 5, // 5 minutes
-        cacheTime: 1000 * 60 * 10, // 10 minutes
-        onSuccess: (data) => {
-            // Sync with Zustand store
-            setTasks(data);
-        },
-        onError: (error) => {
-            console.error("[useTasks] Error fetching tasks:", error);
-        },
+        gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
     });
+
+    // Sync tasks with Zustand store when data changes
+    useEffect(() => {
+        if (tasks && tasks.length > 0) {
+            setTasks(tasks);
+        }
+    }, [tasks]); // Remove setTasks from dependencies to prevent infinite loop
+
+    // Log errors when they occur
+    useEffect(() => {
+        if (error) {
+            console.error("[useTasks] Error fetching tasks:", error);
+        }
+    }, [error]);
 
     // Create task mutation
     const addTask = useMutation({
@@ -111,6 +119,7 @@ export function useTasks() {
             await queryClient.cancelQueries([QUERY_KEYS.TASKS]);
             const previousTasks = queryClient.getQueryData([QUERY_KEYS.TASKS]);
 
+            // Optimistic update
             queryClient.setQueryData([QUERY_KEYS.TASKS], (old) =>
                 (old || []).map((task) => (task.id === id ? { ...task, ...updates } : task))
             );
@@ -118,15 +127,20 @@ export function useTasks() {
 
             return { previousTasks };
         },
+        onSuccess: (data, { id, updates }) => {
+            // Update with server response
+            queryClient.setQueryData([QUERY_KEYS.TASKS], (old) =>
+                (old || []).map((task) => (task.id === id ? data : task))
+            );
+            updateTaskInStore(id, data);
+        },
         onError: (error, variables, context) => {
             if (context?.previousTasks) {
                 queryClient.setQueryData([QUERY_KEYS.TASKS], context.previousTasks);
             }
             console.error("[useTasks] Error patching task:", error);
         },
-        onSettled: () => {
-            queryClient.invalidateQueries([QUERY_KEYS.TASKS]);
-        },
+        // Don't invalidate queries on drag operations - rely on optimistic updates
     });
 
     // Delete task mutation

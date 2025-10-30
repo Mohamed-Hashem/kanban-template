@@ -81,9 +81,10 @@ const TaskCard = ({ task, index }) => {
                     <Card
                         ref={provided.innerRef}
                         {...provided.draggableProps}
+                        {...provided.dragHandleProps}
                         sx={{
                             mb: 2,
-                            cursor: "grab",
+                            cursor: snapshot.isDragging ? "grabbing" : "grab",
                             backgroundColor: snapshot.isDragging
                                 ? "action.hover"
                                 : "background.paper",
@@ -92,44 +93,51 @@ const TaskCard = ({ task, index }) => {
                             transition: "all 0.2s ease",
                             "&:hover": {
                                 boxShadow: 3,
-                                transform: "translateY(-2px)",
+                                transform: snapshot.isDragging ? "none" : "translateY(-2px)",
                             },
-                            position: "relative",
-                            overflow: "visible",
                         }}
                     >
-                        {/* Drag Handle */}
-                        <Box
-                            {...provided.dragHandleProps}
-                            sx={{
-                                position: "absolute",
-                                top: 8,
-                                left: 8,
-                                cursor: "grab",
-                                color: "action.disabled",
-                                "&:hover": { color: "action.active" },
-                            }}
-                        >
-                            <DragIcon fontSize="small" />
-                        </Box>
-
-                        <CardContent sx={{ pl: 5, pr: 1, pt: 1, pb: 1 }}>
+                        <CardContent sx={{ p: 2, pb: 1 }}>
                             {/* Title */}
-                            <Typography
-                                variant="h6"
+                            <Box
                                 sx={{
-                                    fontSize: "1rem",
-                                    fontWeight: 600,
-                                    mb: 1,
-                                    pr: 4,
+                                    display: "flex",
+                                    alignItems: "flex-start",
+                                    justifyContent: "space-between",
+                                    gap: 1,
                                 }}
                             >
-                                {task.title}
-                            </Typography>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                    <DragIcon
+                                        fontSize="small"
+                                        sx={{ color: "action.disabled", flexShrink: 0 }}
+                                    />
+                                    <Typography
+                                        variant="h6"
+                                        sx={{
+                                            fontSize: "1rem",
+                                            fontWeight: 600,
+                                        }}
+                                    >
+                                        {task.title}
+                                    </Typography>
+                                </Box>
+                                <IconButton
+                                    size="small"
+                                    onClick={handleMenuOpen}
+                                    sx={{ flexShrink: 0 }}
+                                >
+                                    <MoreVertIcon fontSize="small" />
+                                </IconButton>
+                            </Box>
 
                             {/* Description */}
                             {task.description && (
-                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                    sx={{ mb: 1, mt: 1 }}
+                                >
                                     {truncateText(task.description, 80)}
                                 </Typography>
                             )}
@@ -163,13 +171,6 @@ const TaskCard = ({ task, index }) => {
                                 )}
                             </Box>
                         </CardContent>
-
-                        {/* Actions */}
-                        <CardActions sx={{ justifyContent: "flex-end", pt: 0, pb: 1 }}>
-                            <IconButton size="small" onClick={handleMenuOpen} sx={{ ml: "auto" }}>
-                                <MoreVertIcon fontSize="small" />
-                            </IconButton>
-                        </CardActions>
                     </Card>
                 )}
             </Draggable>

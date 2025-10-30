@@ -1,8 +1,7 @@
 import { useState, useMemo } from "react";
 import { Droppable } from "@hello-pangea/dnd";
-import { Box, Paper, Typography, Badge, IconButton, Collapse, Divider } from "@mui/material";
+import { Box, Paper, Typography, IconButton, Divider, Chip } from "@mui/material";
 import { ExpandMore as ExpandMoreIcon, Add as AddIcon } from "@mui/icons-material";
-import InfiniteScroll from "react-infinite-scroll-component";
 import TaskCard from "../TaskCard";
 import { PAGINATION } from "../../constants";
 
@@ -36,38 +35,46 @@ const Column = ({ column, tasks, onAddTask }) => {
     const handleAddTask = () => {
         onAddTask && onAddTask(column.id);
     };
-
     return (
         <Paper
-            elevation={2}
+            elevation={3}
             sx={{
+                width: "100%",
                 height: "100%",
                 display: "flex",
                 flexDirection: "column",
                 backgroundColor: column.color,
-                borderRadius: 2,
+                borderRadius: { xs: 2, md: 3 },
                 overflow: "hidden",
+                border: `2px solid ${column.accentColor}40`,
+                transition: "all 0.3s ease",
+                "&:hover": {
+                    boxShadow: 6,
+                    transform: "translateY(-2px)",
+                },
             }}
         >
             {/* Column Header */}
             <Box
                 sx={{
-                    p: 2,
-                    pb: 1,
+                    p: { xs: 1.5, sm: 2 },
+                    pb: { xs: 1, sm: 1.5 },
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    backgroundColor: "rgba(255, 255, 255, 0.8)",
+                    backgroundColor: "rgba(255, 255, 255, 0.95)",
                     backdropFilter: "blur(10px)",
+                    borderBottom: `3px solid ${column.accentColor}`,
                 }}
             >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1, minWidth: 0 }}>
                     <IconButton
                         size="small"
                         onClick={handleToggleExpand}
                         sx={{
                             transform: expanded ? "rotate(0deg)" : "rotate(-90deg)",
-                            transition: "transform 0.2s",
+                            transition: "transform 0.3s ease",
+                            color: column.accentColor,
                         }}
                     >
                         <ExpandMoreIcon />
@@ -77,23 +84,30 @@ const Column = ({ column, tasks, onAddTask }) => {
                         variant="h6"
                         sx={{
                             fontWeight: 700,
-                            fontSize: "1rem",
+                            fontSize: { xs: "0.875rem", sm: "1rem" },
                             color: column.accentColor,
                             textTransform: "uppercase",
                             letterSpacing: "0.5px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
                         }}
                     >
                         {column.title}
                     </Typography>
 
-                    <Badge
-                        badgeContent={tasks.length}
-                        color="primary"
+                    <Chip
+                        label={`${tasks.length}`}
+                        size="small"
                         sx={{
-                            "& .MuiBadge-badge": {
-                                backgroundColor: column.accentColor,
-                                color: "white",
-                                fontWeight: 600,
+                            backgroundColor: column.accentColor,
+                            color: "white",
+                            fontWeight: 700,
+                            fontSize: "0.75rem",
+                            height: { xs: "20px", sm: "24px" },
+                            minWidth: { xs: "20px", sm: "24px" },
+                            "& .MuiChip-label": {
+                                px: { xs: 0.5, sm: 1 },
                             },
                         }}
                     />
@@ -104,27 +118,32 @@ const Column = ({ column, tasks, onAddTask }) => {
                     onClick={handleAddTask}
                     sx={{
                         color: column.accentColor,
+                        backgroundColor: `${column.accentColor}15`,
                         "&:hover": {
-                            backgroundColor: `${column.accentColor}20`,
+                            backgroundColor: `${column.accentColor}30`,
+                            transform: "scale(1.1)",
                         },
+                        transition: "all 0.2s ease",
                     }}
+                    title="Add task"
                 >
-                    <AddIcon />
+                    <AddIcon fontSize="small" />
                 </IconButton>
             </Box>
-
-            <Divider />
 
             {/* Column Description */}
             {expanded && column.description && (
                 <Typography
                     variant="caption"
                     sx={{
-                        px: 2,
-                        py: 1,
+                        px: { xs: 1.5, sm: 2 },
+                        py: { xs: 0.75, sm: 1 },
                         color: "text.secondary",
                         fontStyle: "italic",
-                        backgroundColor: "rgba(255, 255, 255, 0.5)",
+                        fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                        backgroundColor: "rgba(255, 255, 255, 0.7)",
+                        display: "block",
+                        borderBottom: `1px solid ${column.accentColor}20`,
                     }}
                 >
                     {column.description}
@@ -132,27 +151,26 @@ const Column = ({ column, tasks, onAddTask }) => {
             )}
 
             {/* Tasks Container */}
-            <Collapse in={expanded} timeout="auto">
+            {expanded && (
                 <Droppable droppableId={column.id}>
                     {(provided, snapshot) => (
                         <Box
                             ref={provided.innerRef}
                             {...provided.droppableProps}
-                            id={`scrollable-${column.id}`}
                             sx={{
                                 flex: 1,
-                                p: 2,
-                                pt: 1,
+                                p: { xs: 1.5, sm: 2 },
+                                pt: { xs: 1, sm: 1.5 },
                                 overflowY: "auto",
                                 overflowX: "hidden",
-                                minHeight: 200,
-                                maxHeight: "calc(100vh - 250px)",
+                                minHeight: { xs: 150, sm: 200 },
+                                maxHeight: { xs: "calc(100vh - 250px)", sm: "calc(100vh - 280px)" },
                                 backgroundColor: snapshot.isDraggingOver
-                                    ? `${column.accentColor}15`
+                                    ? `${column.accentColor}20`
                                     : "transparent",
-                                transition: "background-color 0.2s ease",
+                                transition: "background-color 0.3s ease",
                                 "&::-webkit-scrollbar": {
-                                    width: "8px",
+                                    width: "6px",
                                 },
                                 "&::-webkit-scrollbar-track": {
                                     backgroundColor: "rgba(0, 0, 0, 0.05)",
@@ -162,7 +180,7 @@ const Column = ({ column, tasks, onAddTask }) => {
                                     backgroundColor: column.accentColor,
                                     borderRadius: "10px",
                                     "&:hover": {
-                                        backgroundColor: `${column.accentColor}CC`,
+                                        backgroundColor: `${column.accentColor}DD`,
                                     },
                                 },
                             }}
@@ -171,55 +189,68 @@ const Column = ({ column, tasks, onAddTask }) => {
                                 <Box
                                     sx={{
                                         textAlign: "center",
-                                        py: 4,
+                                        py: { xs: 3, sm: 4 },
                                         color: "text.secondary",
                                     }}
                                 >
-                                    <Typography variant="body2">No tasks yet</Typography>
-                                    <Typography variant="caption">
+                                    <Typography
+                                        variant="body2"
+                                        sx={{ fontSize: { xs: "0.875rem", sm: "1rem" } }}
+                                    >
+                                        No tasks yet
+                                    </Typography>
+                                    <Typography
+                                        variant="caption"
+                                        sx={{ fontSize: { xs: "0.7rem", sm: "0.75rem" } }}
+                                    >
                                         Drag tasks here or click + to add
                                     </Typography>
                                 </Box>
                             ) : (
-                                <InfiniteScroll
-                                    dataLength={displayedTasks.length}
-                                    next={loadMore}
-                                    hasMore={hasMore}
-                                    loader={
-                                        <Typography
-                                            variant="caption"
-                                            sx={{ textAlign: "center", display: "block", mt: 2 }}
-                                        >
-                                            Loading more...
-                                        </Typography>
-                                    }
-                                    scrollableTarget={`scrollable-${column.id}`}
-                                    endMessage={
-                                        tasks.length > PAGINATION.ITEMS_PER_PAGE && (
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    textAlign: "center",
-                                                    display: "block",
-                                                    mt: 2,
-                                                    color: "text.secondary",
-                                                }}
-                                            >
-                                                All tasks loaded
-                                            </Typography>
-                                        )
-                                    }
-                                >
+                                <>
                                     {displayedTasks.map((task, index) => (
                                         <TaskCard key={task.id} task={task} index={index} />
                                     ))}
-                                </InfiniteScroll>
+                                    {hasMore && (
+                                        <Box
+                                            sx={{
+                                                textAlign: "center",
+                                                mt: 2,
+                                                mb: 1,
+                                            }}
+                                        >
+                                            <IconButton
+                                                size="small"
+                                                onClick={loadMore}
+                                                sx={{
+                                                    color: column.accentColor,
+                                                    border: `2px dashed ${column.accentColor}60`,
+                                                    borderRadius: 2,
+                                                    px: 2,
+                                                    py: 0.5,
+                                                    "&:hover": {
+                                                        backgroundColor: `${column.accentColor}15`,
+                                                        borderColor: column.accentColor,
+                                                    },
+                                                }}
+                                            >
+                                                <Typography
+                                                    variant="caption"
+                                                    sx={{ fontSize: "0.75rem", fontWeight: 600 }}
+                                                >
+                                                    Load more ({tasks.length - displayCount}{" "}
+                                                    remaining)
+                                                </Typography>
+                                            </IconButton>
+                                        </Box>
+                                    )}
+                                </>
                             )}
                             {provided.placeholder}
                         </Box>
                     )}
                 </Droppable>
-            </Collapse>
+            )}
         </Paper>
     );
 };

@@ -1,251 +1,134 @@
 import { useState } from "react";
 import {
-    Box,
-    Container,
+    AppBar,
+    Toolbar,
     Typography,
-    Button,
-    CircularProgress,
-    Alert,
-    Snackbar,
+    Box,
+    IconButton,
     Fab,
-    Tooltip,
+    useTheme,
+    useMediaQuery,
 } from "@mui/material";
-import { Add as AddIcon, Refresh as RefreshIcon } from "@mui/icons-material";
+import { Brightness4, Brightness7, Add as AddIcon } from "@mui/icons-material";
 import Board from "../../components/Board";
 import SearchBar from "../../components/SearchBar";
 import AddTaskDialog from "../../components/AddTaskDialog";
-import { useTasks } from "../../hooks";
 import useTaskStore from "../../store/taskStore";
 
-/**
- * Home Page - Main Kanban Dashboard
- * Orchestrates all components and manages global state
- */
 function Home() {
-    const { tasks, isLoading, error, refetch, isRefetching } = useTasks();
-    const { getFilteredTasks } = useTaskStore();
-    const [addDialogOpen, setAddDialogOpen] = useState(false);
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+    const [darkMode, setDarkMode] = useState(false);
+    const [openAddDialog, setOpenAddDialog] = useState(false);
     const [selectedColumn, setSelectedColumn] = useState("backlog");
-    const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "info" });
+    const { searchQuery, setSearchQuery, filterColumn, setFilterColumn } = useTaskStore();
 
-    // Get filtered tasks from store
-    const filteredTasks = getFilteredTasks();
+    const handleToggleDarkMode = () => {
+        setDarkMode(!darkMode);
+    };
 
     const handleAddTask = (columnId) => {
         setSelectedColumn(columnId || "backlog");
-        setAddDialogOpen(true);
+        setOpenAddDialog(true);
     };
 
-    const handleRefresh = async () => {
-        try {
-            await refetch();
-            setSnackbar({
-                open: true,
-                message: "Tasks refreshed successfully!",
-                severity: "success",
-            });
-        } catch (err) {
-            setSnackbar({
-                open: true,
-                message: "Failed to refresh tasks",
-                severity: "error",
-            });
-        }
+    const handleCloseDialog = () => {
+        setOpenAddDialog(false);
+        setSelectedColumn("backlog");
     };
-
-    const handleCloseSnackbar = () => {
-        setSnackbar((prev) => ({ ...prev, open: false }));
-    };
-
-    // Loading state
-    if (isLoading) {
-        return (
-            <Box
-                sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    minHeight: "100vh",
-                    flexDirection: "column",
-                    gap: 2,
-                }}
-            >
-                <CircularProgress size={60} />
-                <Typography variant="h6" color="text.secondary">
-                    Loading your tasks...
-                </Typography>
-            </Box>
-        );
-    }
-
-    // Error state
-    if (error) {
-        return (
-            <Container maxWidth="md" sx={{ mt: 8 }}>
-                <Alert
-                    severity="error"
-                    action={
-                        <Button color="inherit" size="small" onClick={handleRefresh}>
-                            Retry
-                        </Button>
-                    }
-                >
-                    <Typography variant="h6" gutterBottom>
-                        Failed to load tasks
-                    </Typography>
-                    <Typography variant="body2">
-                        {error.message || "An unexpected error occurred"}
-                    </Typography>
-                </Alert>
-            </Container>
-        );
-    }
 
     return (
-        <Box sx={{ minHeight: "100vh", backgroundColor: "background.default", pb: 8 }}>
-            {/* Header */}
-            <Box
+        <Box
+            sx={{
+                minHeight: "100vh",
+                bgcolor: darkMode ? "grey.900" : "grey.50",
+                transition: "background-color 0.3s",
+            }}
+        >
+            {/* App Bar */}
+            <AppBar
+                position="sticky"
                 sx={{
-                    backgroundColor: "primary.main",
-                    color: "white",
-                    py: 3,
-                    boxShadow: 3,
+                    bgcolor: darkMode ? "grey.800" : "primary.main",
+                    boxShadow: 2,
                 }}
             >
-                <Container maxWidth="xl">
-                    <Box
+                <Toolbar>
+                    <Typography
+                        variant="h6"
+                        component="div"
                         sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            flexWrap: "wrap",
-                            gap: 2,
+                            flexGrow: 1,
+                            fontWeight: 700,
+                            letterSpacing: 1,
                         }}
                     >
-                        <Box>
-                            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-                                Kanban Dashboard
-                            </Typography>
-                            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                                {filteredTasks.length === tasks.length
-                                    ? `${tasks.length} total task${tasks.length !== 1 ? "s" : ""}`
-                                    : `Showing ${filteredTasks.length} of ${tasks.length} tasks`}
-                            </Typography>
-                        </Box>
+                        Kanban Board
+                    </Typography>
 
-                        <Box sx={{ display: "flex", gap: 2 }}>
-                            <Button
-                                variant="outlined"
-                                startIcon={<RefreshIcon />}
-                                onClick={handleRefresh}
-                                disabled={isRefetching}
-                                sx={{
-                                    color: "white",
-                                    borderColor: "white",
-                                    "&:hover": {
-                                        borderColor: "white",
-                                        backgroundColor: "rgba(255, 255, 255, 0.1)",
-                                    },
-                                }}
-                            >
-                                {isRefetching ? "Refreshing..." : "Refresh"}
-                            </Button>
+                    <IconButton color="inherit" onClick={handleToggleDarkMode} sx={{ mr: 1 }}>
+                        {darkMode ? <Brightness7 /> : <Brightness4 />}
+                    </IconButton>
+                </Toolbar>
+            </AppBar>
 
-                            <Button
-                                variant="contained"
-                                startIcon={<AddIcon />}
-                                onClick={() => handleAddTask("backlog")}
-                                sx={{
-                                    backgroundColor: "white",
-                                    color: "primary.main",
-                                    "&:hover": {
-                                        backgroundColor: "rgba(255, 255, 255, 0.9)",
-                                    },
-                                }}
-                            >
-                                New Task
-                            </Button>
-                        </Box>
+            {/* Main Content */}
+            <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+                {/* Search and Filter Bar */}
+                <Box
+                    sx={{
+                        mb: 3,
+                        display: "flex",
+                        justifyContent: "center",
+                        width: "100%",
+                    }}
+                >
+                    <Box
+                        sx={{
+                            width: {
+                                xs: "100%",
+                                sm: "90%",
+                                md: "75%",
+                                lg: "60%",
+                                xl: "50%",
+                            },
+                            minWidth: { sm: "50%" },
+                        }}
+                    >
+                        <SearchBar
+                            searchQuery={searchQuery}
+                            setSearchQuery={setSearchQuery}
+                            filterStatus={filterColumn}
+                            setFilterStatus={setFilterColumn}
+                        />
                     </Box>
-                </Container>
+                </Box>
+
+                {/* Kanban Board */}
+                <Board onAddTask={handleAddTask} />
             </Box>
 
-            {/* Search and Filter */}
-            <Container maxWidth="xl" sx={{ mt: 3 }}>
-                <SearchBar />
-            </Container>
-
-            {/* Board */}
-            <Container maxWidth="xl" disableGutters sx={{ px: { xs: 2, sm: 3 } }}>
-                {filteredTasks.length === 0 && tasks.length > 0 ? (
-                    <Box sx={{ textAlign: "center", py: 8 }}>
-                        <Typography variant="h6" color="text.secondary" gutterBottom>
-                            No tasks match your filters
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            Try adjusting your search or filter criteria
-                        </Typography>
-                    </Box>
-                ) : tasks.length === 0 ? (
-                    <Box sx={{ textAlign: "center", py: 8 }}>
-                        <Typography variant="h5" color="text.secondary" gutterBottom>
-                            Welcome to your Kanban Board!
-                        </Typography>
-                        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                            Get started by creating your first task
-                        </Typography>
-                        <Button
-                            variant="contained"
-                            size="large"
-                            startIcon={<AddIcon />}
-                            onClick={() => handleAddTask("backlog")}
-                        >
-                            Create First Task
-                        </Button>
-                    </Box>
-                ) : (
-                    <Board onAddTask={handleAddTask} />
-                )}
-            </Container>
-
             {/* Floating Action Button */}
-            <Tooltip title="Add New Task" placement="left">
-                <Fab
-                    color="primary"
-                    sx={{
-                        position: "fixed",
-                        bottom: 24,
-                        right: 24,
-                        boxShadow: 6,
-                    }}
-                    onClick={() => handleAddTask("backlog")}
-                >
-                    <AddIcon />
-                </Fab>
-            </Tooltip>
+            <Fab
+                color="primary"
+                aria-label="add task"
+                onClick={() => handleAddTask("backlog")}
+                sx={{
+                    position: "fixed",
+                    bottom: isMobile ? 16 : 32,
+                    right: isMobile ? 16 : 32,
+                    boxShadow: 4,
+                }}
+            >
+                <AddIcon />
+            </Fab>
 
             {/* Add Task Dialog */}
             <AddTaskDialog
-                open={addDialogOpen}
-                onClose={() => setAddDialogOpen(false)}
+                open={openAddDialog}
+                onClose={handleCloseDialog}
                 defaultColumn={selectedColumn}
             />
-
-            {/* Snackbar for notifications */}
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={4000}
-                onClose={handleCloseSnackbar}
-                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-            >
-                <Alert
-                    onClose={handleCloseSnackbar}
-                    severity={snackbar.severity}
-                    sx={{ width: "100%" }}
-                >
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
         </Box>
     );
 }

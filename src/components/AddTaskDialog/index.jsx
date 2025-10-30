@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Dialog,
     DialogTitle,
@@ -32,6 +32,13 @@ const AddTaskDialog = ({ open, onClose, defaultColumn = "backlog" }) => {
     });
 
     const [errors, setErrors] = useState({});
+
+    // Update column when defaultColumn changes
+    useEffect(() => {
+        if (open && defaultColumn) {
+            setFormData((prev) => ({ ...prev, column: defaultColumn }));
+        }
+    }, [open, defaultColumn]);
 
     const handleChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }));

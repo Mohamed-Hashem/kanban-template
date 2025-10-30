@@ -45,15 +45,18 @@ const useTaskStore = create(
 
             moveTask: (id, newColumn, newIndex) =>
                 set((state) => {
-                    const taskIndex = state.tasks.findIndex((t) => t.id === id);
+                    // Convert to string for comparison since IDs can be strings or numbers
+                    const taskIndex = state.tasks.findIndex((t) => String(t.id) === String(id));
                     if (taskIndex !== -1) {
+                        // Mutate directly for immer
                         state.tasks[taskIndex].column = newColumn;
-
-                        // Optional: Reorder tasks within column
-                        if (newIndex !== undefined) {
-                            const [movedTask] = state.tasks.splice(taskIndex, 1);
-                            state.tasks.splice(newIndex, 0, movedTask);
-                        }
+                        state.tasks[taskIndex].updatedAt = new Date().toISOString();
+                        console.log(
+                            `[Store] Moved task ${id} to ${newColumn}`,
+                            state.tasks[taskIndex]
+                        );
+                    } else {
+                        console.error(`[Store] Task ${id} not found in tasks array`);
                     }
                 }),
 
