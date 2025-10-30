@@ -1,0 +1,58 @@
+{
+    "tasks": [
+        {
+            "id": 1,
+            "title": "Design homepage",
+            "description": "Create a modern, responsive homepage design with hero section",
+            "column": "backlog",
+            "priority": "high",
+            "createdAt": "2025-10-30T10:00:00.000Z",
+            "updatedAt": "2025-10-30T10:00:00.000Z"
+        },
+        {
+            "id": 2,
+            "title": "Implement authentication",
+            "description": "Add user login and registration functionality",
+            "column": "in-progress",
+            "priority": "high",
+            "createdAt": "2025-10-30T11:00:00.000Z",
+            "updatedAt": "2025-10-30T11:00:00.000Z"
+        },
+        {
+            "id": 3,
+            "title": "Set up database",
+            "description": "Configure PostgreSQL database and migrations",
+            "column": "in-progress",
+            "priority": "medium",
+            "createdAt": "2025-10-30T12:00:00.000Z",
+            "updatedAt": "2025-10-30T12:00:00.000Z"
+        },
+        {
+            "id": 4,
+            "title": "Code review for API endpoints",
+            "description": "Review and test all REST API endpoints",
+            "column": "review",
+            "priority": "medium",
+            "createdAt": "2025-10-30T13:00:00.000Z",
+            "updatedAt": "2025-10-30T13:00:00.000Z"
+        },
+        {
+            "id": 5,
+            "title": "Write unit tests",
+            "description": "Add comprehensive unit tests for core features",
+            "column": "done",
+            "priority": "low",
+            "createdAt": "2025-10-29T09:00:00.000Z",
+            "updatedAt": "2025-10-30T14:00:00.000Z"
+        },
+        {
+            "id": 6,
+            "title": "Update documentation",
+            "description": "Update README and API documentation",
+            "column": "done",
+            "priority": "low",
+            "createdAt": "2025-10-29T10:00:00.000Z",
+            "updatedAt": "2025-10-30T15:00:00.000Z"
+        }
+    ]
+}
