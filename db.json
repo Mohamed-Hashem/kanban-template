@@ -22,10 +22,10 @@
       "id": "3",
       "title": "Set up database",
       "description": "Configure PostgreSQL database and migrations",
-      "column": "backlog",
+      "column": "in-progress",
       "priority": "medium",
       "createdAt": "2025-10-30T12:00:00.000Z",
-      "updatedAt": "2025-10-30T12:50:58.565Z"
+      "updatedAt": "2025-10-30T13:37:52.852Z"
     },
     {
       "id": "4",
@@ -67,10 +67,10 @@
       "id": "602b",
       "title": "Update the Scollbar",
       "description": "New Task\nUpdate the Scollbar",
-      "column": "in-progress",
+      "column": "backlog",
       "priority": "low",
       "createdAt": "2025-10-30T12:04:15.511Z",
-      "updatedAt": "2025-10-30T13:15:54.230Z"
+      "updatedAt": "2025-10-30T13:37:54.916Z"
     },
     {
       "id": "2bf3",
