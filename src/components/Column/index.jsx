@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Droppable } from "@hello-pangea/dnd";
 import { Box, Paper, Typography, IconButton, Chip } from "@mui/material";
 import { ExpandMore as ExpandMoreIcon, Add as AddIcon } from "@mui/icons-material";
@@ -6,6 +6,13 @@ import TaskCard from "../TaskCard";
 
 const Column = ({ column, tasks, onAddTask }) => {
     const [expanded, setExpanded] = useState(true);
+    const [isPending, startTransition] = useTransition();
+
+    const handleToggleExpand = () => {
+        startTransition(() => {
+            setExpanded(!expanded);
+        });
+    };
 
     return (
         <Paper
@@ -37,11 +44,12 @@ const Column = ({ column, tasks, onAddTask }) => {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1, minWidth: 0 }}>
                     <IconButton
                         size="small"
-                        onClick={() => setExpanded(!expanded)}
+                        onClick={handleToggleExpand}
                         sx={{
                             transform: expanded ? "rotate(0deg)" : "rotate(-90deg)",
-                            transition: "transform 0.3s ease",
+                            transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                             color: column.accentColor,
+                            opacity: isPending ? 0.5 : 1,
                         }}
                     >
                         <ExpandMoreIcon />

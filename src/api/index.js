@@ -9,10 +9,23 @@ class JSONBinAdapter {
     constructor(binUrl) {
         this.binUrl = binUrl;
         this.cache = null;
+        this.cacheTimestamp = null;
+        this.cacheDuration = 2000; // Cache for 2 seconds
+        this.pendingUpdate = null;
     }
 
     async fetchBin() {
         try {
+            // Return cached data if still fresh
+            const now = Date.now();
+            if (
+                this.cache &&
+                this.cacheTimestamp &&
+                now - this.cacheTimestamp < this.cacheDuration
+            ) {
+                return this.cache;
+            }
+
             const headers = {};
             const apiKey = import.meta.env.VITE_JSONBIN_API_KEY;
             if (apiKey) {
@@ -22,6 +35,7 @@ class JSONBinAdapter {
             const response = await axios.get(this.binUrl, { headers });
             // JSONBin returns data in different formats, handle both
             this.cache = response.data.record || response.data;
+            this.cacheTimestamp = now;
             return this.cache;
         } catch (error) {
             console.error("Failed to fetch from JSONBin:", error);
@@ -31,14 +45,32 @@ class JSONBinAdapter {
 
     async updateBin(data) {
         try {
+            // Wait for any pending update to complete
+            if (this.pendingUpdate) {
+                await this.pendingUpdate;
+            }
+
             const headers = { "Content-Type": "application/json" };
             const apiKey = import.meta.env.VITE_JSONBIN_API_KEY;
             if (apiKey) {
                 headers["X-Master-Key"] = apiKey;
             }
 
-            await axios.put(this.binUrl, data, { headers });
-            this.cache = data;
+            // Create promise for this update
+            this.pendingUpdate = axios
+                .put(this.binUrl, data, { headers })
+                .then(() => {
+                    this.cache = data;
+                    this.cacheTimestamp = Date.now();
+                    this.pendingUpdate = null;
+                })
+                .catch((error) => {
+                    console.error("Failed to update JSONBin:", error);
+                    this.pendingUpdate = null;
+                    throw error;
+                });
+
+            await this.pendingUpdate;
         } catch (error) {
             console.error("Failed to update JSONBin:", error);
             throw error;

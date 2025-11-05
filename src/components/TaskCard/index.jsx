@@ -44,21 +44,27 @@ const TaskCard = ({ task, index }) => {
                         sx={{
                             mb: 2,
                             cursor: snapshot.isDragging ? "grabbing !important" : "grab",
-                            opacity: snapshot.isDragging ? 0.7 : 1,
+                            opacity: snapshot.isDragging ? 0.9 : 1,
                             backgroundColor: snapshot.isDragging
                                 ? "primary.light"
                                 : "background.paper",
                             boxShadow: snapshot.isDragging ? 8 : 2,
-                            transform: snapshot.isDragging ? "rotate(3deg) scale(1.05)" : "none",
-                            transition: snapshot.isDragging ? "none" : "all 0.2s ease",
+                            transform: snapshot.isDragging ? "rotate(2deg)" : "none",
+                            transition: snapshot.isDragging
+                                ? "none"
+                                : "box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease",
                             border: snapshot.isDragging ? "2px solid" : "1px solid",
                             borderColor: snapshot.isDragging ? "primary.main" : "divider",
                             userSelect: "none",
+                            willChange: snapshot.isDragging ? "transform, opacity" : "auto",
+                            contain: "layout style paint",
+                            contentVisibility: "auto",
                             "&:hover": {
                                 boxShadow: snapshot.isDragging ? 8 : 4,
                                 transform: snapshot.isDragging
-                                    ? "rotate(3deg) scale(1.05)"
+                                    ? "rotate(2deg)"
                                     : "translateY(-2px)",
+                                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                             },
                         }}
                     >
