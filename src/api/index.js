@@ -1,6 +1,129 @@
 import axios from "axios";
 import { API_CONFIG } from "../constants";
 
+// Check if we're using JSONBin.io (single-bin storage)
+const isJSONBin = API_CONFIG.BASE_URL.includes("jsonbin.io");
+
+// JSONBin.io adapter for single-bin storage
+class JSONBinAdapter {
+    constructor(binUrl) {
+        this.binUrl = binUrl;
+        this.cache = null;
+    }
+
+    async fetchBin() {
+        try {
+            const headers = {};
+            const apiKey = import.meta.env.VITE_JSONBIN_API_KEY;
+            if (apiKey) {
+                headers["X-Master-Key"] = apiKey;
+            }
+
+            const response = await axios.get(this.binUrl, { headers });
+            // JSONBin returns data in different formats, handle both
+            this.cache = response.data.record || response.data;
+            return this.cache;
+        } catch (error) {
+            console.error("Failed to fetch from JSONBin:", error);
+            return { tasks: [] };
+        }
+    }
+
+    async updateBin(data) {
+        try {
+            const headers = { "Content-Type": "application/json" };
+            const apiKey = import.meta.env.VITE_JSONBIN_API_KEY;
+            if (apiKey) {
+                headers["X-Master-Key"] = apiKey;
+            }
+
+            await axios.put(this.binUrl, data, { headers });
+            this.cache = data;
+        } catch (error) {
+            console.error("Failed to update JSONBin:", error);
+            throw error;
+        }
+    }
+
+    async getTasks(params = {}) {
+        const data = await this.fetchBin();
+        let tasks = data.tasks || [];
+
+        if (params.q) {
+            const query = params.q.toLowerCase();
+            tasks = tasks.filter(
+                (task) =>
+                    task.title?.toLowerCase().includes(query) ||
+                    task.description?.toLowerCase().includes(query)
+            );
+        }
+
+        if (params.column) {
+            tasks = tasks.filter((task) => task.column === params.column);
+        }
+
+        return tasks;
+    }
+
+    async getTaskById(id) {
+        const data = await this.fetchBin();
+        const task = (data.tasks || []).find((t) => t.id === id);
+        if (!task) throw new Error("Task not found");
+        return task;
+    }
+
+    async createTask(task) {
+        const data = await this.fetchBin();
+        const newTask = {
+            ...task,
+            id: Date.now().toString(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        };
+        data.tasks = [...(data.tasks || []), newTask];
+        await this.updateBin(data);
+        return newTask;
+    }
+
+    async updateTask(task) {
+        const data = await this.fetchBin();
+        const index = (data.tasks || []).findIndex((t) => t.id === task.id);
+        if (index === -1) throw new Error("Task not found");
+
+        data.tasks[index] = {
+            ...task,
+            updatedAt: new Date().toISOString(),
+        };
+        await this.updateBin(data);
+        return data.tasks[index];
+    }
+
+    async patchTask(id, updates) {
+        const data = await this.fetchBin();
+        const index = (data.tasks || []).findIndex((t) => t.id === id);
+        if (index === -1) throw new Error("Task not found");
+
+        data.tasks[index] = {
+            ...data.tasks[index],
+            ...updates,
+            updatedAt: new Date().toISOString(),
+        };
+        await this.updateBin(data);
+        return data.tasks[index];
+    }
+
+    async deleteTask(id) {
+        const data = await this.fetchBin();
+        data.tasks = (data.tasks || []).filter((t) => t.id !== id);
+        await this.updateBin(data);
+        return { id };
+    }
+}
+
+// Initialize adapter if using JSONBin, otherwise use standard REST API
+const jsonBinAdapter = isJSONBin ? new JSONBinAdapter(API_CONFIG.BASE_URL) : null;
+
+// Standard REST API client for json-server, MockAPI, etc.
 const api = axios.create({
     baseURL: API_CONFIG.BASE_URL,
     timeout: API_CONFIG.TIMEOUT,
@@ -46,17 +169,27 @@ api.interceptors.response.use(
     }
 );
 
+// API Functions - automatically use JSONBin adapter or REST API
 export const getTasks = async (params = {}) => {
+    if (jsonBinAdapter) {
+        return await jsonBinAdapter.getTasks(params);
+    }
     const response = await api.get("/tasks", { params });
     return response.data;
 };
 
 export const getTaskById = async (id) => {
+    if (jsonBinAdapter) {
+        return await jsonBinAdapter.getTaskById(id);
+    }
     const response = await api.get(`/tasks/${id}`);
     return response.data;
 };
 
 export const createTask = async (task) => {
+    if (jsonBinAdapter) {
+        return await jsonBinAdapter.createTask(task);
+    }
     const response = await api.post("/tasks", {
         ...task,
         createdAt: new Date().toISOString(),
@@ -66,6 +199,9 @@ export const createTask = async (task) => {
 };
 
 export const updateTask = async (task) => {
+    if (jsonBinAdapter) {
+        return await jsonBinAdapter.updateTask(task);
+    }
     const response = await api.put(`/tasks/${task.id}`, {
         ...task,
         updatedAt: new Date().toISOString(),
@@ -74,6 +210,9 @@ export const updateTask = async (task) => {
 };
 
 export const patchTask = async (id, updates) => {
+    if (jsonBinAdapter) {
+        return await jsonBinAdapter.patchTask(id, updates);
+    }
     const response = await api.patch(`/tasks/${id}`, {
         ...updates,
         updatedAt: new Date().toISOString(),
@@ -82,6 +221,9 @@ export const patchTask = async (id, updates) => {
 };
 
 export const deleteTask = async (id) => {
+    if (jsonBinAdapter) {
+        return await jsonBinAdapter.deleteTask(id);
+    }
     await api.delete(`/tasks/${id}`);
     return { id };
 };
@@ -89,6 +231,9 @@ export const deleteTask = async (id) => {
 export const bulkUpdateTasks = async (tasks) => Promise.all(tasks.map((task) => updateTask(task)));
 
 export const searchTasks = async (query) => {
+    if (jsonBinAdapter) {
+        return await jsonBinAdapter.getTasks({ q: query });
+    }
     const response = await api.get("/tasks", { params: { q: query } });
     return response.data;
 };
