@@ -21,16 +21,8 @@ export const QUERY_KEYS = {
     TASKS: "tasks",
 };
 
-export const STORAGE_KEYS = {
-    TASK_STORE: "kanban-task-store",
-};
-
 export const PRIORITIES = {
     LOW: { value: "low", label: "Low", color: "#4CAF50" },
     MEDIUM: { value: "medium", label: "Medium", color: "#FF9800" },
     HIGH: { value: "high", label: "High", color: "#F44336" },
-};
-
-export const DEBOUNCE_DELAYS = {
-    SEARCH: 300,
 };

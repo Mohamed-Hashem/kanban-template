@@ -1,21 +1,27 @@
-import { useCallback, useRef, useOptimistic, useTransition } from "react";
+import { useCallback, useRef, useOptimistic, useTransition, useMemo } from "react";
 import { DragDropContext } from "@hello-pangea/dnd";
 import { Box, CircularProgress, Fade } from "@mui/material";
 import Column from "../Column";
 import { COLUMN_ORDER } from "../../constants";
-import { useTasks } from "../../hooks";
-import useTaskStore from "../../store/taskStore";
+import { useTasks, useTaskUI } from "../../hooks";
 import { groupTasksByColumn } from "../../utils";
 
 const Board = ({ onAddTask }) => {
-    const { patchTask } = useTasks();
-    const { moveTask: moveTaskInStore, getFilteredTasks } = useTaskStore();
+    const { tasks: allTasks, patchTask } = useTasks();
+    const { searchQuery } = useTaskUI();
     const updateTimeoutRef = useRef(null);
     const [isPending, startTransition] = useTransition();
 
-    const tasks = getFilteredTasks();
+    const tasks = useMemo(() => {
+        if (!searchQuery) return allTasks;
+        const query = searchQuery.toLowerCase();
+        return allTasks.filter(
+            (t) =>
+                t.title?.toLowerCase().includes(query) ||
+                t.description?.toLowerCase().includes(query)
+        );
+    }, [allTasks, searchQuery]);
 
-    // useOptimistic for instant UI updates
     const [optimisticTasks, updateOptimisticTasks] = useOptimistic(
         tasks,
         (currentTasks, { taskId, newColumn }) => {
@@ -44,27 +50,20 @@ const Board = ({ onAddTask }) => {
             const oldColumn = source.droppableId;
 
             if (newColumn !== oldColumn) {
-                // Instant optimistic update
                 updateOptimisticTasks({ taskId: draggableId, newColumn });
 
-                // Wrap state updates in transition
-                startTransition(() => {
-                    // Update store (non-urgent)
-                    moveTaskInStore(draggableId, newColumn);
-                });
-
-                // Clear any pending update
                 if (updateTimeoutRef.current) {
                     clearTimeout(updateTimeoutRef.current);
                 }
 
-                // Debounced API call
                 updateTimeoutRef.current = setTimeout(() => {
-                    patchTask.mutate({ id: draggableId, updates: { column: newColumn } });
+                    startTransition(() => {
+                        patchTask.mutate({ id: draggableId, updates: { column: newColumn } });
+                    });
                 }, 100);
             }
         },
-        [moveTaskInStore, patchTask, updateOptimisticTasks]
+        [patchTask, updateOptimisticTasks]
     );
 
     return (
@@ -77,7 +76,6 @@ const Board = ({ onAddTask }) => {
                     position: "relative",
                 }}
             >
-                {/* Loading indicator for pending transitions */}
                 <Fade in={isPending}>
                     <Box
                         sx={{
@@ -116,12 +114,12 @@ const Board = ({ onAddTask }) => {
                                 flex: {
                                     xs: "1 1 100%",
                                     sm: "1 1 calc(50% - 8px)",
-                                    md: "1 1 calc(33.333% - 13.33px)",
+                                    md: "1 1 calc(50% - 10px)",
                                     lg: "1 1 calc(25% - 15px)",
                                 },
                                 minWidth: 0,
                                 display: "flex",
-                                minHeight: { xs: "400px", sm: "500px", md: "70vh" },
+                                minHeight: { xs: "60vh", sm: "60vh", md: "60vh" },
                                 opacity: isPending ? 0.7 : 1,
                                 transition: "opacity 0.2s ease",
                             }}

@@ -44,7 +44,7 @@ class ErrorBoundary extends React.Component {
                             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                                 {this.state.error?.message || "An unexpected error occurred"}
                             </Typography>
-                            {process.env.NODE_ENV === "development" && this.state.errorInfo && (
+                            {import.meta.env.DEV && this.state.errorInfo && (
                                 <Paper
                                     variant="outlined"
                                     sx={{

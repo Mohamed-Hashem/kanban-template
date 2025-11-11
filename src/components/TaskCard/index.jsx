@@ -265,7 +265,9 @@ const TaskCard = ({ task, index }) => {
             <Dialog open={openDialog === "delete"} onClose={() => setOpenDialog(null)}>
                 <DialogTitle>Confirm Delete</DialogTitle>
                 <DialogContent>
-                    <Typography>Are you sure you want to delete "{task.title}"?</Typography>
+                    <Typography>
+                        Are you sure you want to delete &quot;{task.title}&quot;?
+                    </Typography>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenDialog(null)}>Cancel</Button>

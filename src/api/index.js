@@ -1,22 +1,19 @@
 import axios from "axios";
 import { API_CONFIG } from "../constants";
 
-// Check if we're using JSONBin.io (single-bin storage)
 const isJSONBin = API_CONFIG.BASE_URL.includes("jsonbin.io");
 
-// JSONBin.io adapter for single-bin storage
 class JSONBinAdapter {
     constructor(binUrl) {
         this.binUrl = binUrl;
         this.cache = null;
         this.cacheTimestamp = null;
-        this.cacheDuration = 2000; // Cache for 2 seconds
+        this.cacheDuration = 2000;
         this.pendingUpdate = null;
     }
 
     async fetchBin() {
         try {
-            // Return cached data if still fresh
             const now = Date.now();
             if (
                 this.cache &&
@@ -33,7 +30,6 @@ class JSONBinAdapter {
             }
 
             const response = await axios.get(this.binUrl, { headers });
-            // JSONBin returns data in different formats, handle both
             this.cache = response.data.record || response.data;
             this.cacheTimestamp = now;
             return this.cache;
@@ -45,7 +41,6 @@ class JSONBinAdapter {
 
     async updateBin(data) {
         try {
-            // Wait for any pending update to complete
             if (this.pendingUpdate) {
                 await this.pendingUpdate;
             }
@@ -56,7 +51,6 @@ class JSONBinAdapter {
                 headers["X-Master-Key"] = apiKey;
             }
 
-            // Create promise for this update
             this.pendingUpdate = axios
                 .put(this.binUrl, data, { headers })
                 .then(() => {
@@ -152,10 +146,8 @@ class JSONBinAdapter {
     }
 }
 
-// Initialize adapter if using JSONBin, otherwise use standard REST API
 const jsonBinAdapter = isJSONBin ? new JSONBinAdapter(API_CONFIG.BASE_URL) : null;
 
-// Standard REST API client for json-server, MockAPI, etc.
 const api = axios.create({
     baseURL: API_CONFIG.BASE_URL,
     timeout: API_CONFIG.TIMEOUT,
@@ -201,7 +193,6 @@ api.interceptors.response.use(
     }
 );
 
-// API Functions - automatically use JSONBin adapter or REST API
 export const getTasks = async (params = {}) => {
     if (jsonBinAdapter) {
         return await jsonBinAdapter.getTasks(params);

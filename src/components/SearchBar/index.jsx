@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { Box, TextField, InputAdornment, IconButton } from "@mui/material";
 import { Search as SearchIcon, Clear as ClearIcon } from "@mui/icons-material";
-import { useDebounce } from "../../hooks";
-import useTaskStore from "../../store/taskStore";
+import { useDebounce, useTaskUI } from "../../hooks";
 
 const SearchBar = () => {
     const [localSearch, setLocalSearch] = useState("");
     const debouncedSearch = useDebounce(localSearch, 300);
-    const { setSearchQuery } = useTaskStore();
+    const { setSearchQuery } = useTaskUI();
 
     useEffect(() => {
         setSearchQuery(debouncedSearch);
