@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
-import { TaskUIContext } from "./taskUIContext";
+import { createContext, useState, useMemo } from "react";
+
+export const TaskUIContext = createContext(null);
 
 export function TaskUIProvider({ children }) {
     const [selectedTask, setSelectedTask] = useState(null);
