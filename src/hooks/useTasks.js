@@ -62,9 +62,7 @@ export function useTasks() {
         mutationFn: ({ id, updates }) => patchTask(id, updates),
         onMutate: async ({ id, updates }) => {
             await queryClient.cancelQueries([QUERY_KEYS.TASKS]);
-
             const previousTasks = queryClient.getQueryData([QUERY_KEYS.TASKS]);
-
             queryClient.setQueryData([QUERY_KEYS.TASKS], (old) =>
                 (old || []).map((task) =>
                     String(task.id) === String(id)
@@ -72,7 +70,6 @@ export function useTasks() {
                         : task
                 )
             );
-
             return { previousTasks };
         },
         onSuccess: (serverData, { id }) => {
@@ -84,8 +81,11 @@ export function useTasks() {
             if (context?.previousTasks) {
                 queryClient.setQueryData([QUERY_KEYS.TASKS], context.previousTasks);
             }
+            console.error("Failed to patch task:", err);
         },
-        onSettled: () => {},
+        onSettled: () => {
+            queryClient.invalidateQueries([QUERY_KEYS.TASKS]);
+        },
     });
 
     const removeTask = useMutation({

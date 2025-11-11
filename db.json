@@ -4,82 +4,89 @@
       "id": "1",
       "title": "Design homepage",
       "description": "Create a modern, responsive homepage design with hero section",
-      "column": "review",
+      "column": "backlog",
+      "status": "active",
       "priority": "high",
+      "order": 1000,
       "createdAt": "2025-10-30T10:00:00.000Z",
-      "updatedAt": "2025-11-11T10:26:25.891Z"
+      "updatedAt": "2025-11-11T17:23:47.952Z"
     },
     {
       "id": "2",
       "title": "Implement authentication",
       "description": "Add user login and registration functionality",
       "column": "done",
+      "status": "completed",
       "priority": "high",
+      "order": 1000,
       "createdAt": "2025-10-30T11:00:00.000Z",
-      "updatedAt": "2025-11-11T10:26:28.068Z"
+      "updatedAt": "2025-11-11T18:00:00.000Z"
     },
     {
       "id": "3",
       "title": "Set up database",
       "description": "Configure PostgreSQL database and migrations",
       "column": "in-progress",
+      "status": "active",
       "priority": "medium",
+      "order": 3000,
       "createdAt": "2025-10-30T12:00:00.000Z",
-      "updatedAt": "2025-10-30T13:37:52.852Z"
+      "updatedAt": "2025-11-11T17:47:46.994Z"
     },
     {
       "id": "4",
       "title": "Code review for API endpoints",
       "description": "Review and test all REST API endpoints",
-      "column": "in-progress",
+      "column": "review",
+      "status": "active",
       "priority": "medium",
+      "order": 1000,
       "createdAt": "2025-10-30T13:00:00.000Z",
-      "updatedAt": "2025-11-11T10:06:14.306Z"
+      "updatedAt": "2025-11-11T17:23:50.973Z"
     },
     {
       "id": "5",
       "title": "Write unit tests",
       "description": "Add comprehensive unit tests for core features",
-      "column": "done",
+      "column": "in-progress",
+      "status": "active",
       "priority": "low",
+      "order": 2000,
       "createdAt": "2025-10-29T09:00:00.000Z",
-      "updatedAt": "2025-10-30T13:31:05.313Z"
+      "updatedAt": "2025-11-11T17:51:41.185Z"
     },
     {
       "id": "6",
       "title": "Update documentation",
       "description": "Update README and API documentation",
-      "column": "review",
+      "column": "done",
+      "status": "completed",
       "priority": "low",
+      "order": 2000,
       "createdAt": "2025-10-29T10:00:00.000Z",
-      "updatedAt": "2025-11-11T10:06:16.460Z"
+      "updatedAt": "2025-11-11T18:00:00.000Z"
     },
     {
-      "id": "9e91",
-      "title": "Updating Data",
-      "description": "Updating Data Nowwww",
+      "id": "7",
+      "title": "Refactor codebase",
+      "description": "Clean up legacy code and improve performance",
+      "column": "backlog",
+      "status": "active",
+      "priority": "high",
+      "order": 3000,
+      "createdAt": "2025-11-11T18:00:00.000Z",
+      "updatedAt": "2025-11-11T18:00:00.000Z"
+    },
+    {
+      "id": "8",
+      "title": "Deploy to production",
+      "description": "Deploy application to production server",
       "column": "review",
+      "status": "active",
       "priority": "high",
-      "createdAt": "2025-10-30T11:32:33.097Z",
-      "updatedAt": "2025-10-30T13:31:07.470Z"
-    },
-    {
-      "id": "602b",
-      "title": "Update the Scollbar",
-      "description": "New Task\nUpdate the Scollbar",
-      "column": "backlog",
-      "priority": "low",
-      "createdAt": "2025-10-30T12:04:15.511Z",
-      "updatedAt": "2025-10-30T13:37:54.916Z"
-    },
-    {
-      "id": "2bf3",
-      "title": "Create Home Pages",
-      "description": "Create Home Page",
-      "column": "backlog",
-      "priority": "high",
-      "createdAt": "2025-10-30T12:04:39.761Z",
-      "updatedAt": "2025-10-30T13:16:06.545Z"
+      "order": 0,
+      "createdAt": "2025-11-11T18:00:00.000Z",
+      "updatedAt": "2025-11-11T17:34:41.809Z"
     }
   ]
 }

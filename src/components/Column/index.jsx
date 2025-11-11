@@ -8,6 +8,8 @@ const Column = ({ column, tasks, onAddTask }) => {
     const [expanded, setExpanded] = useState(true);
     const [isPending, startTransition] = useTransition();
 
+    const sortedTasks = [...tasks].sort((a, b) => (a.order || 0) - (b.order || 0));
+
     const handleToggleExpand = () => {
         startTransition(() => {
             setExpanded(!expanded);
@@ -26,6 +28,7 @@ const Column = ({ column, tasks, onAddTask }) => {
                 borderRadius: 2,
                 overflow: "visible",
                 border: `2px solid ${column.accentColor}40`,
+                transition: "border 0.2s ease",
             }}
         >
             <Box
@@ -166,7 +169,7 @@ const Column = ({ column, tasks, onAddTask }) => {
                                     </Typography>
                                 </Box>
                             ) : (
-                                tasks.map((task, index) => (
+                                sortedTasks.map((task, index) => (
                                     <TaskCard key={task.id} task={task} index={index} />
                                 ))
                             )}

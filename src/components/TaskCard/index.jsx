@@ -32,6 +32,7 @@ const TaskCard = ({ task, index }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [openDialog, setOpenDialog] = useState(null);
     const [editedTask, setEditedTask] = useState(task);
+    const isUpdating = editTask.isPending || removeTask.isPending;
 
     return (
         <>
@@ -96,6 +97,7 @@ const TaskCard = ({ task, index }) => {
                                         setAnchorEl(e.currentTarget);
                                     }}
                                     sx={{ flexShrink: 0 }}
+                                    disabled={isUpdating}
                                 >
                                     <MoreVertIcon fontSize="small" />
                                 </IconButton>
@@ -143,12 +145,17 @@ const TaskCard = ({ task, index }) => {
                 )}
             </Draggable>
 
-            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+            <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl) && !isUpdating}
+                onClose={() => setAnchorEl(null)}
+            >
                 <MenuItem
                     onClick={() => {
                         setOpenDialog("view");
                         setAnchorEl(null);
                     }}
+                    disabled={isUpdating}
                 >
                     <ViewIcon fontSize="small" sx={{ mr: 1 }} /> View Details
                 </MenuItem>
@@ -157,6 +164,7 @@ const TaskCard = ({ task, index }) => {
                         setOpenDialog("edit");
                         setAnchorEl(null);
                     }}
+                    disabled={isUpdating}
                 >
                     <EditIcon fontSize="small" sx={{ mr: 1 }} /> Edit
                 </MenuItem>
@@ -166,6 +174,7 @@ const TaskCard = ({ task, index }) => {
                         setAnchorEl(null);
                     }}
                     sx={{ color: "error.main" }}
+                    disabled={isUpdating}
                 >
                     <DeleteIcon fontSize="small" sx={{ mr: 1 }} /> Delete
                 </MenuItem>
@@ -246,18 +255,25 @@ const TaskCard = ({ task, index }) => {
                             setOpenDialog(null);
                             setEditedTask(task);
                         }}
+                        disabled={isUpdating}
                     >
                         Cancel
                     </Button>
                     <Button
                         onClick={() => {
-                            editTask.mutate(editedTask);
-                            setOpenDialog(null);
+                            editTask.mutate(editedTask, {
+                                onSuccess: () => {
+                                    setOpenDialog(null);
+                                },
+                                onError: (error) => {
+                                    console.error("Failed to update task:", error);
+                                },
+                            });
                         }}
                         variant="contained"
-                        disabled={!editedTask.title}
+                        disabled={!editedTask.title || isUpdating}
                     >
-                        Save
+                        {isUpdating ? "Saving..." : "Save"}
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -270,16 +286,25 @@ const TaskCard = ({ task, index }) => {
                     </Typography>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setOpenDialog(null)}>Cancel</Button>
+                    <Button onClick={() => setOpenDialog(null)} disabled={isUpdating}>
+                        Cancel
+                    </Button>
                     <Button
                         onClick={() => {
-                            removeTask.mutate(task.id);
-                            setOpenDialog(null);
+                            removeTask.mutate(task.id, {
+                                onSuccess: () => {
+                                    setOpenDialog(null);
+                                },
+                                onError: (error) => {
+                                    console.error("Failed to delete task:", error);
+                                },
+                            });
                         }}
                         color="error"
                         variant="contained"
+                        disabled={isUpdating}
                     >
-                        Delete
+                        {isUpdating ? "Deleting..." : "Delete"}
                     </Button>
                 </DialogActions>
             </Dialog>

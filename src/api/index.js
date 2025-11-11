@@ -91,13 +91,6 @@ class JSONBinAdapter {
         return tasks;
     }
 
-    async getTaskById(id) {
-        const data = await this.fetchBin();
-        const task = (data.tasks || []).find((t) => t.id === id);
-        if (!task) throw new Error("Task not found");
-        return task;
-    }
-
     async createTask(task) {
         const data = await this.fetchBin();
         const newTask = {
@@ -201,14 +194,6 @@ export const getTasks = async (params = {}) => {
     return response.data;
 };
 
-export const getTaskById = async (id) => {
-    if (jsonBinAdapter) {
-        return await jsonBinAdapter.getTaskById(id);
-    }
-    const response = await api.get(`/tasks/${id}`);
-    return response.data;
-};
-
 export const createTask = async (task) => {
     if (jsonBinAdapter) {
         return await jsonBinAdapter.createTask(task);
@@ -249,16 +234,6 @@ export const deleteTask = async (id) => {
     }
     await api.delete(`/tasks/${id}`);
     return { id };
-};
-
-export const bulkUpdateTasks = async (tasks) => Promise.all(tasks.map((task) => updateTask(task)));
-
-export const searchTasks = async (query) => {
-    if (jsonBinAdapter) {
-        return await jsonBinAdapter.getTasks({ q: query });
-    }
-    const response = await api.get("/tasks", { params: { q: query } });
-    return response.data;
 };
 
 export default api;

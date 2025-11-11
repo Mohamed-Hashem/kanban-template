@@ -4,12 +4,15 @@ import { Add as AddIcon } from "@mui/icons-material";
 import Board from "../../components/Board";
 import SearchBar from "../../components/SearchBar";
 import AddTaskDialog from "../../components/AddTaskDialog";
+import LoadingFallback from "../../components/LoadingFallback";
+import { useTasks } from "../../hooks";
 
 function Home() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const [openAddDialog, setOpenAddDialog] = useState(false);
     const [selectedColumn, setSelectedColumn] = useState("backlog");
+    const { isLoading } = useTasks();
 
     const handleAddTask = (columnId) => {
         setSelectedColumn(columnId || "backlog");
@@ -20,6 +23,10 @@ function Home() {
         setOpenAddDialog(false);
         setSelectedColumn("backlog");
     };
+
+    if (isLoading) {
+        return <LoadingFallback />;
+    }
 
     return (
         <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>

@@ -16,7 +16,6 @@ dist-ssr
 
 # Environment variables
 .env
-.env.development
 .env.production
 
 # Editor directories and files

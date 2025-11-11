@@ -1,6 +1,6 @@
-import { useCallback, useRef, useOptimistic, useTransition, useMemo } from "react";
+import { useCallback, useOptimistic, useTransition, useMemo } from "react";
 import { DragDropContext } from "@hello-pangea/dnd";
-import { Box, CircularProgress, Fade } from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import Column from "../Column";
 import { COLUMN_ORDER } from "../../constants";
 import { useTasks, useTaskUI } from "../../hooks";
@@ -9,8 +9,7 @@ import { groupTasksByColumn } from "../../utils";
 const Board = ({ onAddTask }) => {
     const { tasks: allTasks, patchTask } = useTasks();
     const { searchQuery } = useTaskUI();
-    const updateTimeoutRef = useRef(null);
-    const [isPending, startTransition] = useTransition();
+    const [, startTransition] = useTransition();
 
     const tasks = useMemo(() => {
         if (!searchQuery) return allTasks;
@@ -24,10 +23,15 @@ const Board = ({ onAddTask }) => {
 
     const [optimisticTasks, updateOptimisticTasks] = useOptimistic(
         tasks,
-        (currentTasks, { taskId, newColumn }) => {
+        (currentTasks, { taskId, newColumn, newOrder }) => {
             return currentTasks.map((task) =>
                 String(task.id) === String(taskId)
-                    ? { ...task, column: newColumn, updatedAt: new Date().toISOString() }
+                    ? {
+                          ...task,
+                          column: newColumn,
+                          order: newOrder !== undefined ? newOrder : task.order,
+                          updatedAt: new Date().toISOString(),
+                      }
                     : task
             );
         }
@@ -37,6 +41,8 @@ const Board = ({ onAddTask }) => {
 
     const handleDragEnd = useCallback(
         (result) => {
+            if (patchTask.isPending) return;
+
             const { destination, source, draggableId } = result;
 
             if (!destination) return;
@@ -46,24 +52,50 @@ const Board = ({ onAddTask }) => {
             )
                 return;
 
-            const newColumn = destination.droppableId;
-            const oldColumn = source.droppableId;
+            const sourceColumn = source.droppableId;
+            const destColumn = destination.droppableId;
+            const newIndex = destination.index;
 
-            if (newColumn !== oldColumn) {
-                updateOptimisticTasks({ taskId: draggableId, newColumn });
+            const sourceTasks = (tasksByColumn[sourceColumn] || []).sort(
+                (a, b) => (a.order || 0) - (b.order || 0)
+            );
+            const destTasks = (tasksByColumn[destColumn] || []).sort(
+                (a, b) => (a.order || 0) - (b.order || 0)
+            );
 
-                if (updateTimeoutRef.current) {
-                    clearTimeout(updateTimeoutRef.current);
-                }
+            const draggedTask = sourceTasks.find((t) => String(t.id) === String(draggableId));
+            if (!draggedTask) return;
 
-                updateTimeoutRef.current = setTimeout(() => {
-                    startTransition(() => {
-                        patchTask.mutate({ id: draggableId, updates: { column: newColumn } });
-                    });
-                }, 100);
+            const tasksToConsider =
+                sourceColumn === destColumn
+                    ? destTasks.filter((t) => String(t.id) !== String(draggableId))
+                    : destTasks;
+
+            let newOrder;
+            if (tasksToConsider.length === 0) {
+                newOrder = 1000;
+            } else if (newIndex === 0) {
+                newOrder = tasksToConsider[0].order - 1000;
+            } else if (newIndex >= tasksToConsider.length) {
+                newOrder = tasksToConsider[tasksToConsider.length - 1].order + 1000;
+            } else {
+                const prevOrder = tasksToConsider[newIndex - 1].order || 0;
+                const nextOrder = tasksToConsider[newIndex].order || 2000;
+                newOrder = Math.floor((prevOrder + nextOrder) / 2);
             }
+
+            startTransition(() => {
+                updateOptimisticTasks({ taskId: draggableId, newColumn: destColumn, newOrder });
+            });
+
+            startTransition(() => {
+                patchTask.mutate({
+                    id: draggableId,
+                    updates: { column: destColumn, order: newOrder },
+                });
+            });
         },
-        [patchTask, updateOptimisticTasks]
+        [patchTask, updateOptimisticTasks, tasksByColumn]
     );
 
     return (
@@ -76,27 +108,65 @@ const Board = ({ onAddTask }) => {
                     position: "relative",
                 }}
             >
-                <Fade in={isPending}>
+                {patchTask.isPending && (
                     <Box
                         sx={{
-                            position: "absolute",
-                            top: 16,
-                            right: 16,
-                            zIndex: 1000,
+                            position: "fixed",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            zIndex: 9998,
+                            backgroundColor: "rgba(0, 0, 0, 0.15)",
+                            backdropFilter: "blur(2px)",
                             display: "flex",
                             alignItems: "center",
-                            gap: 1,
-                            backgroundColor: "background.paper",
-                            px: 2,
-                            py: 1,
-                            borderRadius: 2,
-                            boxShadow: 2,
+                            justifyContent: "center",
+                            animation: "fadeIn 0.1s ease-out",
+                            "@keyframes fadeIn": {
+                                from: { opacity: 0 },
+                                to: { opacity: 1 },
+                            },
                         }}
                     >
-                        <CircularProgress size={16} />
-                        <Box sx={{ fontSize: "0.875rem", color: "text.secondary" }}>Syncing...</Box>
+                        <Box
+                            sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                gap: 2,
+                                backgroundColor: "white",
+                                px: 4,
+                                py: 3,
+                                borderRadius: 3,
+                                boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+                                minWidth: 240,
+                                animation: "scaleIn 0.15s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                                "@keyframes scaleIn": {
+                                    from: {
+                                        opacity: 0,
+                                        transform: "scale(0.9)",
+                                    },
+                                    to: {
+                                        opacity: 1,
+                                        transform: "scale(1)",
+                                    },
+                                },
+                            }}
+                        >
+                            <CircularProgress size={40} thickness={4} />
+                            <Typography
+                                sx={{
+                                    fontSize: "0.95rem",
+                                    fontWeight: 500,
+                                    color: "text.primary",
+                                }}
+                            >
+                                Syncing...
+                            </Typography>
+                        </Box>
                     </Box>
-                </Fade>
+                )}
 
                 <Box
                     sx={{
@@ -120,8 +190,8 @@ const Board = ({ onAddTask }) => {
                                 minWidth: 0,
                                 display: "flex",
                                 minHeight: { xs: "60vh", sm: "60vh", md: "60vh" },
-                                opacity: isPending ? 0.7 : 1,
                                 transition: "opacity 0.2s ease",
+                                opacity: patchTask.isPending ? 0.8 : 1,
                             }}
                         >
                             <Column
